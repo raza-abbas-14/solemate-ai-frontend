@@ -1,29 +1,20 @@
 // SoleMate AI - Gender Selection
 // Premium gender selection screen
 
-import { ArrowLeft, ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import type { Gender } from '@/types';
 
 interface GenderSelectionProps {
   onSelectGender: (gender: Gender) => void;
-  onBack: () => void;
 }
 
-export function GenderSelection({ onSelectGender, onBack }: GenderSelectionProps) {
+export function GenderSelection({ onSelectGender }: GenderSelectionProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30 flex flex-col">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <button
-              type="button"
-              onClick={onBack}
-              className="flex items-center gap-2 text-slate-600 hover:text-amber-600 transition-colors font-medium"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span>Back</span>
-            </button>
             <div className="flex items-center gap-2">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-white" />
