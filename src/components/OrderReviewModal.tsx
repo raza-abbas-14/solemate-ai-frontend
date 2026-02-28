@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { DesignStore } from '@/hooks/useDesignStore';
 import type { PaymentMethod, CustomerDetails, PaymentDetails } from '@/types';
 import { getAdvanceAmount, PAKISTANI_COLORS } from '@/data/shoeOptions';
+import { saveOrder, generateOrderNumber } from '@/services/orderService';
 
 interface OrderReviewModalProps {
   designStore: DesignStore;
@@ -125,19 +126,43 @@ export function OrderReviewModal({ designStore, isOpen, onClose, onConfirmOrder 
     return encodeURIComponent(message);
   };
   
-  const handleWhatsAppCheckout = () => {
+  const handleWhatsAppCheckout = async () => {
     if (!validateForm()) return;
-    
+
+    const config = designStore.getConfiguration();
+    const configData = config as Record<string, string>;
+
+    // Save order to Supabase database
+    const orderNumber = generateOrderNumber();
+    await saveOrder({
+      order_number: orderNumber,
+      status: 'pending',
+      gender: designStore.selectedGender || '',
+      style: configData?.style || '',
+      material: configData?.material || '',
+      color: configData?.color || '',
+      embellishment: configData?.embellishment || configData?.detail || '',
+      sole: configData?.soleType || '',
+      size: configData?.size || '',
+      customer_name: customerInfo.fullName,
+      customer_phone: customerInfo.phoneNumber,
+      customer_address: customerInfo.deliveryAddress,
+      customer_city: customerInfo.city,
+      payment_method: activeTab === 'cod' ? 'Cash on Delivery' : activeTab === 'easypaisa' ? 'Easypaisa' : 'JazzCash',
+      total_price: totalPrice,
+      notes: transactionId ? `Transaction ID: ${transactionId}` : '',
+    });
+
     const message = generateWhatsAppMessage();
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${message}`;
     window.open(whatsappUrl, '_blank');
-    
+
     const paymentDetails: PaymentDetails = {
       method: activeTab,
       advanceAmount,
       ...(activeTab !== 'cod' && { transactionId }),
     };
-    
+
     onConfirmOrder(customerInfo, paymentDetails);
   };
   

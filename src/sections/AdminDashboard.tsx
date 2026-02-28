@@ -1,7 +1,7 @@
 // SoleMate AI - Admin Dashboard v2.0
 // Mobile-responsive with hamburger menu and stacked cards
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   ShoppingBag, 
@@ -22,6 +22,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
 import type { OrderStore } from '@/hooks/useOrderStore';
+import { getAllOrders, updateOrderStatus } from '@/services/orderService';
+import type { Order as SupabaseOrder } from '@/services/orderService';
 import type { Order, OrderStatus } from '@/types';
 
 interface AdminDashboardProps {
@@ -56,6 +58,27 @@ export function AdminDashboard({ orderStore, onLogout }: AdminDashboardProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [realOrders, setRealOrders] = useState<SupabaseOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  // Load real orders from Supabase
+  useEffect(() => {
+    const fetchOrders = async () => {
+      setLoadingOrders(true);
+      const data = await getAllOrders();
+      setRealOrders(data);
+      setLoadingOrders(false);
+    };
+    fetchOrders();
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchOrders, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    await updateOrderStatus(orderId, newStatus);
+    setRealOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+  };
   
   const metrics = orderStore.getMetrics();
   const orders = orderStore.orders;
