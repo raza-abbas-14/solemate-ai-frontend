@@ -129,8 +129,7 @@ export function OrderReviewModal({ designStore, isOpen, onClose, onConfirmOrder 
   const handleWhatsAppCheckout = async () => {
     if (!validateForm()) return;
 
-    const config = designStore.getConfiguration();
-    const configData = config as Record<string, string>;
+    const configData = (config as unknown) as Record<string, string>;
 
     // Save order to Supabase database
     const orderNumber = generateOrderNumber();
