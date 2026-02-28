@@ -1,7 +1,7 @@
 // SoleMate AI - Main Application
 // Premium Pakistani Custom Footwear Platform
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Sparkles, Menu, X, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { GenderSelection } from '@/sections/GenderSelection';
@@ -30,6 +30,22 @@ function App() {
   const [adminPassword, setAdminPassword] = useState('');
   const [adminError, setAdminError] = useState(false);
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  // Secret keyboard shortcut: Ctrl + Shift + A opens admin login
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        e.preventDefault();
+        if (isAdminLoggedIn) {
+          setCurrentView('admin');
+        } else {
+          setCurrentView('admin-login');
+        }
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   const handleAdminLogin = () => {
     if (adminPassword === ADMIN_PASSWORD) {
