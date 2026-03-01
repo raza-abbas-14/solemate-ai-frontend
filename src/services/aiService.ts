@@ -33,7 +33,7 @@ const SKELETON_IMAGES: Record<string, Record<string, string>> = {
 
 // Get skeleton image path for a shoe style
 export function getSkeletonImage(config: ShoeConfiguration): string {
-  const configData = config.config as Record<string, string>;
+  const configData = config.config as unknown as Record<string, string>;
   const style = configData?.style || '';
   const gender = config.gender;
   const images = gender === 'men' ? SKELETON_IMAGES.men : SKELETON_IMAGES.women;
@@ -46,7 +46,7 @@ export function getSkeletonImage(config: ShoeConfiguration): string {
 // Build Img2Img prompt — only describes color/material, NOT shape
 // This way AI only recolors/retextures the shoe, keeping the original shape
 export function buildPrompt(config: ShoeConfiguration): string {
-  const configData = config.config as Record<string, string>;
+  const configData = config.config as unknown as Record<string, string>;
 
   const materialMap: Record<string, string> = {
     'full-grain-leather': 'full-grain leather',
