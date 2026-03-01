@@ -436,13 +436,13 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
           )}
         </div>
         
-        {designStore.isConfigComplete() && !generatedImage && !isGenerating && (
+        {designStore.isConfigComplete() && !isGenerating && (
           <Button
             onClick={handleGenerate}
             className="w-full mt-4 py-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold hover:from-purple-700 hover:to-indigo-700"
           >
             <Sparkles className="w-5 h-5 mr-2" />
-            Generate AI Preview
+            {generatedImage ? '🔄 Regenerate AI Preview' : '✨ Generate AI Preview'}
           </Button>
         )}
       </div>
