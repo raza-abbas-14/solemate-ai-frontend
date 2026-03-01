@@ -1,38 +1,36 @@
-// SoleMate AI - Women's Configurator v2.0
-// Eastern vs Western categories with different materials and embellishments
+// SoleMate AI - Men's Configurator v2.0
+// Mobile-first with sticky preview, conditional logic for Chelsea/Loro Piana
 
 import { useState, useCallback } from 'react';
-import { ArrowLeft, Sparkles, Check, Gem, Sparkle } from 'lucide-react';
+import { ArrowLeft, Sparkles, Check, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { DesignStore } from '@/hooks/useDesignStore';
-import type { WomenCategory } from '@/types';
 import {
-  WOMEN_EASTERN_STYLES,
-  WOMEN_WESTERN_STYLES,
-  EASTERN_MATERIALS,
-  WESTERN_MATERIALS,
-  EASTERN_EMBELLISHMENTS,
-  WESTERN_EMBELLISHMENTS,
+  MEN_STYLE_OPTIONS,
+  MEN_SOLE_OPTIONS,
+  MEN_SIZES,
+  MEN_STEP_LABELS,
   PAKISTANI_COLORS,
-  WOMEN_SIZES,
-  WOMEN_STEP_LABELS,
+  getStyleNote,
+  requiresPlainDesign,
+  isLoroPiana,
 } from '@/data/shoeOptions';
 
-interface WomenConfiguratorProps {
+interface MenConfiguratorProps {
   designStore: DesignStore;
   onReviewOrder: () => void;
   onBack: () => void;
 }
 
-type WomenStep = 'category' | 'style' | 'material' | 'embellishment' | 'color' | 'size';
-const STEPS: WomenStep[] = ['category', 'style', 'material', 'embellishment', 'color', 'size'];
+type MenStep = 'style' | 'material' | 'sole' | 'detail' | 'color' | 'size';
+const STEPS: MenStep[] = ['style', 'material', 'sole', 'detail', 'color', 'size'];
 
-export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenConfiguratorProps) {
+export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfiguratorProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const currentStep = STEPS[currentStepIndex];
-  const { womenConfig, isGenerating, generatedImage, generationProgress } = designStore;
-  const isEastern = womenConfig.category === 'eastern';
+  const { menConfig, isGenerating, generatedImage, generationProgress } = designStore;
   
   const goToNextStep = useCallback(() => {
     if (currentStepIndex < STEPS.length - 1) {
@@ -48,12 +46,12 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
   
   const isCurrentStepComplete = () => {
     switch (currentStep) {
-      case 'category': return womenConfig.category !== null;
-      case 'style': return womenConfig.style !== null;
-      case 'material': return womenConfig.material !== null;
-      case 'embellishment': return womenConfig.embellishment !== null;
-      case 'color': return womenConfig.color !== null;
-      case 'size': return womenConfig.size !== null;
+      case 'style': return menConfig.style !== null;
+      case 'material': return menConfig.material !== null;
+      case 'sole': return menConfig.soleType !== null;
+      case 'detail': return menConfig.detail !== null;
+      case 'color': return menConfig.color !== null;
+      case 'size': return menConfig.size !== null;
       default: return false;
     }
   };
@@ -82,45 +80,74 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
     designStore.stopGenerating();
   };
   
-  const getStyleOptions = () => {
-    return isEastern ? WOMEN_EASTERN_STYLES : WOMEN_WESTERN_STYLES;
-  };
-  
+  // Get available options based on current style selection
   const getMaterialOptions = () => {
-    return isEastern ? EASTERN_MATERIALS : WESTERN_MATERIALS;
+    if (menConfig.style && isLoroPiana(menConfig.style)) {
+      // Loro Piana uses special suede-only materials
+      return designStore.getAvailableMaterials();
+    }
+    return designStore.getAvailableMaterials();
   };
   
-  const getEmbellishmentOptions = () => {
-    return isEastern ? EASTERN_EMBELLISHMENTS : WESTERN_EMBELLISHMENTS;
+  const getDetailOptions = () => {
+    return designStore.getAvailableDetails();
+  };
+  
+  const getStepOptions = () => {
+    switch (currentStep) {
+      case 'style': return MEN_STYLE_OPTIONS;
+      case 'material': return getMaterialOptions();
+      case 'sole': return MEN_SOLE_OPTIONS;
+      case 'detail': return getDetailOptions();
+      default: return [];
+    }
+  };
+  
+  const getSelectedValue = () => {
+    switch (currentStep) {
+      case 'style': return menConfig.style;
+      case 'material': return menConfig.material;
+      case 'sole': return menConfig.soleType;
+      case 'detail': return menConfig.detail;
+      case 'color': return menConfig.color;
+      case 'size': return menConfig.size?.toString() || null;
+      default: return null;
+    }
   };
   
   const handleSelect = (value: string) => {
+    // Reset generated image whenever customer changes anything
+    designStore.setGeneratedImage('');
     switch (currentStep) {
-      case 'category':
-        designStore.updateWomenCategory(value as WomenCategory);
-        setTimeout(goToNextStep, 300);
-        break;
       case 'style':
-        designStore.updateWomenStyle(value as any);
+        designStore.updateMenStyle(value as any);
         setTimeout(goToNextStep, 300);
         break;
       case 'material':
-        designStore.updateWomenMaterial(value as any);
+        designStore.updateMenMaterial(value as any);
         setTimeout(goToNextStep, 300);
         break;
-      case 'embellishment':
-        designStore.updateWomenEmbellishment(value as any);
+      case 'sole':
+        designStore.updateMenSole(value as any);
+        setTimeout(goToNextStep, 300);
+        break;
+      case 'detail':
+        designStore.updateMenDetail(value as any);
         setTimeout(goToNextStep, 300);
         break;
       case 'color':
-        designStore.updateWomenColor(value as any);
+        designStore.updateMenColor(value as any);
         setTimeout(goToNextStep, 300);
         break;
       case 'size':
-        designStore.updateWomenSize(parseInt(value));
+        designStore.updateMenSize(parseInt(value));
         break;
     }
   };
+
+  // Get style note if applicable
+  const styleNote = menConfig.style ? getStyleNote(menConfig.style) : null;
+  const isPlainOnly = menConfig.style ? requiresPlainDesign(menConfig.style) : false;
   
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -133,10 +160,10 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
           </button>
           
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center">
-              <span className="text-white text-xs font-bold">W</span>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
+              <span className="text-white text-xs font-bold">M</span>
             </div>
-            <span className="font-semibold text-slate-900 hidden sm:block">Women&apos;s Collection</span>
+            <span className="font-semibold text-slate-900 hidden sm:block">Men&apos;s Collection</span>
           </div>
           
           <div className="text-sm text-slate-500">
@@ -144,45 +171,30 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
           </div>
         </div>
         
+        {/* Progress Bar */}
         <div className="h-1 bg-slate-100">
           <div 
-            className="h-full bg-gradient-to-r from-rose-500 to-rose-400 transition-all duration-300"
+            className="h-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all duration-300"
             style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }}
           />
         </div>
       </header>
       
-      {/* Sticky Preview */}
+      {/* Sticky Preview Section - Mobile Optimized */}
       <div className="sticky top-[57px] z-30 bg-slate-50 border-b border-slate-200">
         <div className="p-4">
           <div className="aspect-square max-w-[280px] mx-auto bg-white rounded-2xl shadow-lg overflow-hidden relative">
-            {womenConfig.category && (
-              <div className="absolute top-3 right-3 z-10">
-                <Badge className={`text-white ${
-                  isEastern 
-                    ? 'bg-gradient-to-r from-amber-600 to-amber-500' 
-                    : 'bg-gradient-to-r from-rose-500 to-rose-400'
-                }`}>
-                  {isEastern ? (
-                    <><Gem className="w-3 h-3 mr-1" />Eastern</>
-                  ) : (
-                    <><Sparkle className="w-3 h-3 mr-1" />Western</>
-                  )}
-                </Badge>
-              </div>
-            )}
-            
             {isGenerating ? (
               <div className="w-full h-full flex flex-col items-center justify-center">
                 <div className="relative mb-4">
-                  <div className="w-16 h-16 rounded-full border-4 border-rose-200 border-t-rose-500 animate-spin" />
-                  <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-rose-500" />
+                  <div className="w-16 h-16 rounded-full border-4 border-amber-200 border-t-amber-600 animate-spin" />
+                  <Sparkles className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-amber-600" />
                 </div>
                 <p className="text-sm font-medium text-slate-700">AI Generating...</p>
                 <p className="text-xs text-slate-500">{generationProgress}%</p>
                 <div className="w-32 h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
                   <div 
-                    className="h-full bg-gradient-to-r from-rose-500 to-rose-400 transition-all"
+                    className="h-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all"
                     style={{ width: `${generationProgress}%` }}
                   />
                 </div>
@@ -191,8 +203,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
               <img src={generatedImage} alt="Your design" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center p-6">
-                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-rose-100 to-rose-200 flex items-center justify-center mb-4">
-                  <Sparkles className="w-10 h-10 text-rose-400" />
+                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center mb-4">
+                  <Sparkles className="w-10 h-10 text-slate-400" />
                 </div>
                 <p className="text-center text-sm text-slate-500">
                   Complete all steps to see your AI-generated preview
@@ -201,24 +213,37 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
             )}
           </div>
           
+          {/* Style Note Alert */}
+          {styleNote && (
+            <Alert className="mt-3 max-w-[280px] mx-auto bg-amber-50 border-amber-200">
+              <Info className="w-4 h-4 text-amber-600" />
+              <AlertDescription className="text-xs text-amber-800">
+                {styleNote}
+              </AlertDescription>
+            </Alert>
+          )}
+          
+          {/* Design Summary */}
           {designStore.isConfigComplete() && (
             <div className="mt-3 flex flex-wrap gap-2 justify-center">
-              <Badge variant="outline" className={isEastern ? 'border-amber-500 text-amber-700' : 'border-rose-500 text-rose-700'}>
-                {isEastern ? 'Eastern' : 'Western'}
-              </Badge>
-              {womenConfig.style && (
+              {menConfig.style && (
                 <Badge variant="secondary" className="text-xs bg-slate-100">
-                  {getStyleOptions().find(s => s.value === womenConfig.style)?.label}
+                  {MEN_STYLE_OPTIONS.find(s => s.value === menConfig.style)?.label}
                 </Badge>
               )}
-              {womenConfig.color && (
+              {menConfig.material && (
                 <Badge variant="secondary" className="text-xs bg-slate-100">
-                  {PAKISTANI_COLORS.find(c => c.value === womenConfig.color)?.label}
+                  {designStore.getAvailableMaterials().find(m => m.value === menConfig.material)?.label}
                 </Badge>
               )}
-              {womenConfig.size && (
+              {menConfig.color && (
                 <Badge variant="secondary" className="text-xs bg-slate-100">
-                  EU {womenConfig.size}
+                  {PAKISTANI_COLORS.find(c => c.value === menConfig.color)?.label}
+                </Badge>
+              )}
+              {menConfig.size && (
+                <Badge variant="secondary" className="text-xs bg-slate-100">
+                  EU {menConfig.size}
                 </Badge>
               )}
             </div>
@@ -230,140 +255,58 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
       <div className="flex-1 p-4 pb-40">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
-            {currentStep === 'category' ? 'Choose Your Style' : `Select ${WOMEN_STEP_LABELS[currentStepIndex]}`}
+            Select {MEN_STEP_LABELS[currentStepIndex]}
           </h2>
           <p className="text-sm text-slate-500">
-            {currentStep === 'category' 
-              ? 'Select Eastern traditional or Western modern styles' 
-              : `Choose your ${WOMEN_STEP_LABELS[currentStepIndex].toLowerCase()}`}
+            Choose your {MEN_STEP_LABELS[currentStepIndex].toLowerCase()} from the options below
           </p>
+          {isPlainOnly && currentStep === 'detail' && (
+            <p className="text-xs text-amber-600 mt-1">
+              This style requires plain design only
+            </p>
+          )}
         </div>
         
-        {/* Category Selection */}
-        {currentStep === 'category' && (
-          <div className="grid grid-cols-2 gap-4">
-            <button
-              onClick={() => handleSelect('eastern')}
-              className={`p-5 rounded-xl border-2 text-left transition-all ${
-                isEastern 
-                  ? 'border-amber-600 bg-amber-50 shadow-lg shadow-amber-500/10' 
-                  : 'border-slate-200 hover:border-amber-400'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-3">
-                <Gem className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-slate-900">Eastern</h3>
-              <p className="text-xs text-slate-500 mt-1">Khussa, Jutti, Kolhapuri</p>
-              <p className="text-xs text-amber-700 mt-2 font-medium">Traditional embellishments</p>
-            </button>
-            
-            <button
-              onClick={() => handleSelect('western')}
-              className={`p-5 rounded-xl border-2 text-left transition-all ${
-                !isEastern && womenConfig.category 
-                  ? 'border-rose-500 bg-rose-50 shadow-lg shadow-rose-500/10' 
-                  : 'border-slate-200 hover:border-rose-400'
-              }`}
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center mb-3">
-                <Sparkle className="w-6 h-6 text-white" />
-              </div>
-              <h3 className="font-semibold text-slate-900">Western</h3>
-              <p className="text-xs text-slate-500 mt-1">Pump, Block Heel, Mules</p>
-              <p className="text-xs text-rose-700 mt-2 font-medium">Modern embellishments</p>
-            </button>
-          </div>
-        )}
-        
-        {/* Style Selection */}
-        {currentStep === 'style' && (
+        {/* Horizontal Scrolling Options */}
+        {currentStep !== 'color' && currentStep !== 'size' && (
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
-            {getStyleOptions().map((option) => (
+            {getStepOptions().map((option) => (
               <button
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
                 className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${
-                  womenConfig.style === option.value
-                    ? 'border-rose-500 shadow-lg shadow-rose-500/20'
-                    : 'border-slate-200 hover:border-rose-400'
+                  getSelectedValue() === option.value
+                    ? 'border-amber-600 shadow-lg shadow-amber-500/20'
+                    : 'border-slate-200 hover:border-amber-400'
                 }`}
               >
                 <div className="aspect-square bg-slate-100">
-                  <img src={option.image} alt={option.label} className="w-full h-full object-cover" />
+                  <img 
+                    src={option.image} 
+                    alt={option.label}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
                 <div className="p-3 bg-white">
                   <p className="font-medium text-sm text-slate-900 truncate">{option.label}</p>
                   <p className="text-xs text-slate-500 truncate">{option.description}</p>
+                  {/* Material-based pricing display */}
+                  {currentStep === 'material' && (
+                    <p className="text-xs font-semibold mt-1 text-amber-700">
+                      PKR {option.price.toLocaleString()}
+                    </p>
+                  )}
+                  {/* Add-on pricing for sole/detail */}
+                  {(currentStep === 'sole' || currentStep === 'detail') && (
+                    <p className={`text-xs font-medium mt-1 ${
+                      option.price === 0 ? 'text-green-600' : 'text-amber-600'
+                    }`}>
+                      {option.price === 0 ? 'Included' : `+PKR ${option.price.toLocaleString()}`}
+                    </p>
+                  )}
                 </div>
-                {womenConfig.style === option.value && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {/* Material Selection */}
-        {currentStep === 'material' && (
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
-            {getMaterialOptions().map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleSelect(option.value)}
-                className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${
-                  womenConfig.material === option.value
-                    ? 'border-rose-500 shadow-lg shadow-rose-500/20'
-                    : 'border-slate-200 hover:border-rose-400'
-                }`}
-              >
-                <div className="aspect-square bg-slate-100">
-                  <img src={option.image} alt={option.label} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-3 bg-white">
-                  <p className="font-medium text-sm text-slate-900 truncate">{option.label}</p>
-                  <p className="text-xs text-slate-500 truncate">{option.description}</p>
-                  <p className="text-xs font-semibold mt-1 text-rose-700">
-                    PKR {option.price.toLocaleString()}
-                  </p>
-                </div>
-                {womenConfig.material === option.value && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center">
-                    <Check className="w-4 h-4 text-white" />
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
-        
-        {/* Embellishment Selection */}
-        {currentStep === 'embellishment' && (
-          <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
-            {getEmbellishmentOptions().map((option) => (
-              <button
-                key={option.value}
-                onClick={() => handleSelect(option.value)}
-                className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${
-                  womenConfig.embellishment === option.value
-                    ? 'border-rose-500 shadow-lg shadow-rose-500/20'
-                    : 'border-slate-200 hover:border-rose-400'
-                }`}
-              >
-                <div className="aspect-square bg-slate-100">
-                  <img src={option.image} alt={option.label} className="w-full h-full object-cover" />
-                </div>
-                <div className="p-3 bg-white">
-                  <p className="font-medium text-sm text-slate-900 truncate">{option.label}</p>
-                  <p className="text-xs text-slate-500 truncate">{option.description}</p>
-                  <p className={`text-xs font-medium mt-1 ${option.price === 0 ? 'text-green-600' : 'text-rose-700'}`}>
-                    {option.price === 0 ? 'Included' : `+PKR ${option.price.toLocaleString()}`}
-                  </p>
-                </div>
-                {womenConfig.embellishment === option.value && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center">
+                {getSelectedValue() === option.value && (
+                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-amber-600 flex items-center justify-center">
                     <Check className="w-4 h-4 text-white" />
                   </div>
                 )}
@@ -380,14 +323,14 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
                 key={color.value}
                 onClick={() => handleSelect(color.value)}
                 className={`aspect-square rounded-xl border-2 transition-all ${
-                  womenConfig.color === color.value
-                    ? 'border-rose-500 scale-110 shadow-lg'
-                    : 'border-slate-200 hover:border-rose-400'
+                  menConfig.color === color.value
+                    ? 'border-amber-600 scale-110 shadow-lg'
+                    : 'border-slate-200 hover:border-amber-400'
                 }`}
                 style={{ backgroundColor: color.hex }}
                 title={color.label}
               >
-                {womenConfig.color === color.value && (
+                {menConfig.color === color.value && (
                   <Check className={`w-6 h-6 mx-auto ${
                     ['black', 'dark-brown', 'chocolate-brown', 'navy-blue', 'burgundy'].includes(color.value)
                       ? 'text-white'
@@ -402,14 +345,14 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
         {/* Size Selection */}
         {currentStep === 'size' && (
           <div className="grid grid-cols-4 gap-3">
-            {WOMEN_SIZES.map((size) => (
+            {MEN_SIZES.map((size) => (
               <button
                 key={size}
                 onClick={() => handleSelect(size.toString())}
                 className={`aspect-square rounded-xl font-semibold text-lg transition-all ${
-                  womenConfig.size === size
-                    ? 'bg-gradient-to-br from-rose-500 to-rose-400 text-white shadow-lg'
-                    : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-rose-400'
+                  menConfig.size === size
+                    ? 'bg-gradient-to-br from-amber-600 to-amber-500 text-white shadow-lg'
+                    : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-amber-400'
                 }`}
               >
                 {size}
@@ -418,24 +361,30 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
           </div>
         )}
         
-        {/* Navigation */}
+        {/* Navigation Buttons */}
         <div className="flex gap-3 mt-6">
           {currentStepIndex > 0 && (
-            <Button variant="outline" onClick={goToPrevStep} className="flex-1 border-slate-300">
+            <Button
+              variant="outline"
+              onClick={goToPrevStep}
+              className="flex-1 border-slate-300"
+            >
               Previous
             </Button>
           )}
+          
           {currentStepIndex < STEPS.length - 1 && (
             <Button
               onClick={goToNextStep}
               disabled={!isCurrentStepComplete()}
-              className="flex-1 bg-gradient-to-r from-rose-500 to-rose-400 text-white disabled:opacity-50"
+              className="flex-1 bg-gradient-to-r from-amber-600 to-amber-500 text-white disabled:opacity-50"
             >
               Next
             </Button>
           )}
         </div>
         
+        {/* Generate Preview Button — always visible when config complete */}
         {designStore.isConfigComplete() && !isGenerating && (
           <Button
             onClick={handleGenerate}
@@ -460,7 +409,7 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
           <Button
             onClick={onReviewOrder}
             disabled={!designStore.isConfigComplete()}
-            className="bg-gradient-to-r from-rose-500 to-rose-400 hover:from-rose-600 hover:to-rose-500 text-white px-6 disabled:opacity-50"
+            className="bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-700 hover:to-amber-600 text-white px-6 disabled:opacity-50"
           >
             Review & Order
             <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
