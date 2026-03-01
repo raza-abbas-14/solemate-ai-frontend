@@ -63,12 +63,22 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
     
     designStore.startGenerating();
     
-    for (let i = 0; i <= 100; i += 10) {
-      designStore.updateProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 200));
+    try {
+      const { generateShoeImage } = await import('@/services/aiService');
+      const config = designStore.getConfiguration();
+      if (!config) return;
+      
+      const result = await generateShoeImage(config, (progress) => {
+        designStore.updateProgress(progress);
+      });
+      
+      if (result.imageUrl) {
+        designStore.setGeneratedImage(result.imageUrl);
+      }
+    } catch (error) {
+      console.error('Generation failed:', error);
     }
     
-    designStore.setGeneratedImage('/images/generated/sample-women.jpg');
     designStore.stopGenerating();
   };
   

@@ -61,14 +61,22 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
     
     designStore.startGenerating();
     
-    // Simulate AI generation progress
-    for (let i = 0; i <= 100; i += 10) {
-      designStore.updateProgress(i);
-      await new Promise(resolve => setTimeout(resolve, 200));
+    try {
+      const { generateShoeImage } = await import('@/services/aiService');
+      const config = designStore.getConfiguration();
+      if (!config) return;
+      
+      const result = await generateShoeImage(config, (progress) => {
+        designStore.updateProgress(progress);
+      });
+      
+      if (result.imageUrl) {
+        designStore.setGeneratedImage(result.imageUrl);
+      }
+    } catch (error) {
+      console.error('Generation failed:', error);
     }
     
-    // Use a placeholder generated image
-    designStore.setGeneratedImage('/images/generated/sample-men.jpg');
     designStore.stopGenerating();
   };
   
@@ -108,6 +116,8 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
   };
   
   const handleSelect = (value: string) => {
+    // Reset generated image whenever customer changes anything
+    designStore.setGeneratedImage('');
     switch (currentStep) {
       case 'style':
         designStore.updateMenStyle(value as any);
