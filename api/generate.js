@@ -1,3 +1,5 @@
+// Just STARTS the Replicate prediction and returns the ID
+// Browser then polls Replicate directly for the result
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -12,7 +14,6 @@ export default async function handler(req, res) {
   try {
     const { prompt } = req.body;
 
-    // Use FLUX Schnell - correct endpoint
     const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
       method: 'POST',
       headers: {
@@ -31,29 +32,16 @@ export default async function handler(req, res) {
 
     if (!startRes.ok) {
       const err = await startRes.text();
-      return res.status(500).json({ error: `Replicate failed: ${err}` });
+      return res.status(500).json({ error: err });
     }
 
     const prediction = await startRes.json();
-    let result = prediction;
-
-    for (let i = 0; i < 30; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const pollRes = await fetch(
-        `https://api.replicate.com/v1/predictions/${result.id}`,
-        { headers: { 'Authorization': `Token ${REPLICATE_TOKEN}` } }
-      );
-      result = await pollRes.json();
-      if (result.status === 'succeeded') {
-        const imageUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-        return res.status(200).json({ success: true, imageUrl });
-      }
-      if (result.status === 'failed') {
-        return res.status(500).json({ error: result.error || 'Failed' });
-      }
-    }
-
-    return res.status(500).json({ error: 'Timeout' });
+    // Return prediction ID immediately — browser will poll
+    return res.status(200).json({ 
+      success: true, 
+      predictionId: prediction.id,
+      token: REPLICATE_TOKEN
+    });
 
   } catch (error) {
     return res.status(500).json({ error: String(error) });

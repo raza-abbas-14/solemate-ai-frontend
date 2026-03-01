@@ -1,6 +1,3 @@
-// SoleMate AI - Image Generation Service
-// Calls /api/generate (Vercel serverless) which calls Replicate safely
-
 import type { ShoeConfiguration } from '@/types';
 
 const SKELETON_IMAGES: Record<string, Record<string, string>> = {
@@ -52,7 +49,7 @@ function buildPrompt(config: ShoeConfiguration): string {
   };
   const material = materialMap[configData?.material] || configData?.material || 'leather';
   const color = colorMap[configData?.color] || configData?.color || 'black';
-  return `professional shoe product photo, ${color} ${material} shoe, white background, studio lighting, photorealistic, 4k`;
+  return `professional product photo of a ${color} ${material} shoe, plain white background, studio lighting, photorealistic, 4k, high quality`;
 }
 
 export async function generateShoeImage(
@@ -64,33 +61,46 @@ export async function generateShoeImage(
   try {
     onProgress?.(10);
     const prompt = buildPrompt(config);
-    const skeletonFullUrl = `${window.location.origin}${skeletonUrl}`;
-    onProgress?.(20);
 
-    // Call our Vercel backend function — no CORS issues!
-    const response = await fetch('/api/generate', {
+    // Step 1: Start prediction via our Vercel backend
+    const startRes = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt, imageUrl: skeletonFullUrl }),
+      body: JSON.stringify({ prompt }),
     });
 
-    onProgress?.(50);
+    if (!startRes.ok) throw new Error(`Start failed: ${startRes.status}`);
 
-    if (!response.ok) {
-      throw new Error(`API error: ${response.status}`);
+    const { predictionId, token } = await startRes.json();
+    onProgress?.(30);
+
+    // Step 2: Poll Replicate directly from browser
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 2000));
+      
+      const pollRes = await fetch(
+        `https://api.replicate.com/v1/predictions/${predictionId}`,
+        { headers: { 'Authorization': `Token ${token}` } }
+      );
+      
+      const result = await pollRes.json();
+      onProgress?.(30 + i * 2);
+
+      if (result.status === 'succeeded' && result.output) {
+        const imageUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        onProgress?.(100);
+        return { success: true, imageUrl };
+      }
+
+      if (result.status === 'failed') {
+        throw new Error(result.error || 'Generation failed');
+      }
     }
 
-    const data = await response.json();
-    onProgress?.(100);
-
-    if (data.success && data.imageUrl) {
-      return { success: true, imageUrl: data.imageUrl };
-    }
-
-    throw new Error(data.error || 'No image returned');
+    throw new Error('Timeout');
 
   } catch (error) {
-    console.error('Generation error:', error);
+    console.error('AI Error:', error);
     return { success: true, imageUrl: skeletonUrl, error: String(error) };
   }
 }
