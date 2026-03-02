@@ -66,7 +66,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
       const config = designStore.getConfiguration();
       if (!config) return;
 
-      const configData = config.config as Record<string, string>;
+      const configData = config.config as unknown as Record<string, string>;
       const gender = config.gender;
 
       // Build prompt from selected options

@@ -68,7 +68,7 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
       const config = designStore.getConfiguration();
       if (!config) return;
 
-      const configData = config.config as Record<string, string>;
+      const configData = config.config as unknown as Record<string, string>;
 
       // Build prompt from selected options
       const materialMap: Record<string, string> = {
