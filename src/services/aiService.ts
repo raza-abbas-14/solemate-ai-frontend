@@ -7,10 +7,6 @@ if (!API_KEY) {
   console.warn('VITE_STABILITY_API_KEY not set');
 }
 
-/**
- * Stability AI Img2Img generation using FormData (multipart/form-data)
- * This is REQUIRED by the Stability AI API - JSON format is not accepted
- */
 export const generateImg2Img = async (
   params: Img2ImgRequest
 ): Promise<Img2ImgResponse> => {
@@ -20,22 +16,22 @@ export const generateImg2Img = async (
 
   const formData = new FormData();
   
-  // Append the image file directly (must be File or Blob)
+  // Append the image file directly (must be 'init_image')
   formData.append('init_image', params.image);
   
-  // Append text prompts as individual form fields (NOT JSON string)
-  // Stability API expects: text_prompts[0][text], text_prompts[0][weight]
-  formData.append('text_prompts[0][text]', params.prompt);
-  formData.append('text_prompts[0][weight]', '1.0');
-  
-  // Add negative prompt if provided
-  if (params.negativePrompt) {
-    formData.append('text_prompts[1][text]', params.negativePrompt);
-    formData.append('text_prompts[1][weight]', '-1.0');
-  }
+  // Append text prompts as JSON string (must be 'text_prompts')
+  formData.append(
+    'text_prompts',
+    JSON.stringify([
+      { text: params.prompt, weight: 1.0 },
+      ...(params.negativePrompt
+        ? [{ text: params.negativePrompt, weight: -1.0 }]
+        : []),
+    ])
+  );
 
-  // Append other parameters
-  formData.append('strength', String(params.strength ?? 0.65));
+  // Stability AI expects these exact field names (snake_case)
+  formData.append('strength', String(params.strength ?? 0.7));
   formData.append('steps', String(params.steps ?? 30));
   formData.append('cfg_scale', String(params.cfgScale ?? 7));
   formData.append('samples', String(params.samples ?? 1));
@@ -54,7 +50,7 @@ export const generateImg2Img = async (
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${API_KEY}`,
-        // NOTE: Do NOT set Content-Type - browser sets it automatically with boundary
+        // DO NOT set Content-Type - browser sets it automatically with boundary
       },
       body: formData,
     }
