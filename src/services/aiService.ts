@@ -2,7 +2,7 @@
 import { generateAsync } from 'stability-client';
 import type { ShoeConfiguration } from '@/types';
 
-// CORRECT VITE WAY: This fixes the "process is not defined" error
+// The ONLY way to access keys in a Vite project on Vercel
 const STABILITY_API_KEY = import.meta.env.VITE_STABILITY_API_KEY;
 
 const SKELETON_IMAGES: Record<string, Record<string, string>> = {
@@ -58,8 +58,8 @@ export async function generateShoeImage(
     onProgress?.(40);
     const prompt = `Professional product photo of ${config.gender}'s ${style.replace(/-/g, ' ')} shoe, ${configData.material?.replace(/-/g, ' ')} material, ${configData.color?.replace(/-/g, ' ')} color, white background, studio lighting, photorealistic.`;
 
-    // Using 'any' to bypass strict TypeScript build errors in Vercel
-    const result: any = await generateAsync({
+    // Force TypeScript to ignore errors by using 'as any'
+    const result: any = await (generateAsync as any)({
       prompt,
       negativePrompt: NEGATIVE_PROMPT,
       initImage,
@@ -70,7 +70,7 @@ export async function generateShoeImage(
       cfgScale: 7,
       samples: 1,
       imageStrength: 0.5,
-    } as any);
+    });
 
     if (result.images && result.images.length > 0) {
       onProgress?.(100);
@@ -78,7 +78,6 @@ export async function generateShoeImage(
     }
     throw new Error('No image returned');
   } catch (err: any) {
-    console.error(err);
     return { success: false, error: err.message };
   }
 }
