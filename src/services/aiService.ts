@@ -1,83 +1,68 @@
-// @ts-ignore
-import { generateAsync } from 'stability-client';
-import type { ShoeConfiguration } from '@/types';
+import type { Img2ImgRequest, Img2ImgResponse } from '../types/stability';
 
-// VITE REQUIREMENT: Use import.meta.env, not process.env
-const STABILITY_API_KEY = import.meta.env.VITE_STABILITY_API_KEY;
+const API_KEY = import.meta.env.VITE_STABILITY_API_KEY;
+const API_HOST = import.meta.env.VITE_STABILITY_API_HOST || 'https://api.stability.ai';
 
-const SKELETON_IMAGES: Record<string, Record<string, string>> = {
-  men: {
-    'penny-loafer':   '/images/skeletons/men/classic-penny-base.jpg',
-    'chunky-loafer':  '/images/skeletons/men/chunky-loafer-base.jpg',
-    'oxford':         '/images/skeletons/men/oxford-base.jpg',
-    'double-monk':    '/images/skeletons/men/oxford-base.jpg',
-    'chelsea-boot':   '/images/skeletons/men/oxford-base.jpg',
-    'wingtip-brogue': '/images/skeletons/men/oxford-base.jpg',
-    'tassel-loafer':  '/images/skeletons/men/classic-penny-base.jpg',
-    'suede-slip-on':  '/images/skeletons/men/suede-slipon-base.jpg',
-  },
-  women: {
-    'khussa':     '/images/skeletons/women/khussa-base.jpg',
-    'pump':       '/images/skeletons/women/pump-base.jpg',
-    'block-heel': '/images/skeletons/women/block-heel-base.jpg',
-    'stiletto':   '/images/skeletons/women/stiletto-base.jpg',
-    'kolhapuri':  '/images/skeletons/women/khussa-base.jpg',
-    'mules':      '/images/skeletons/women/pump-base.jpg',
-    'jutti':      '/images/skeletons/women/khussa-base.jpg',
-    'wedge':      '/images/skeletons/women/block-heel-base.jpg',
-  },
-};
+if (!API_KEY) {
+  console.warn('VITE_STABILITY_API_KEY not set');
+}
 
-const NEGATIVE_PROMPT = 'change shape, alter silhouette, 3D render, impossible physics, floating elements, morphing, extra straps, deformed sole, digital art, cartoon, illustration, blurry, low quality, distorted, ugly, deformed, unrealistic proportions, multiple shoes, background objects, text, watermark, logo';
-
-async function imageToBase64(url: string): Promise<string> {
-  const response = await fetch(url);
-  const blob = await response.blob();
+const fileToBase64 = (file: File | Blob): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+    reader.readAsDataURL(file);
+    reader.onload = () => {
+      const base64 = (reader.result as string).split(',')[1];
+      resolve(base64);
+    };
     reader.onerror = reject;
-    reader.readAsDataURL(blob);
   });
-}
+};
 
-export async function generateShoeImage(
-  config: ShoeConfiguration,
-  onProgress?: (progress: number) => void
-): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
-  try {
-    if (!STABILITY_API_KEY) throw new Error("API Key Missing in Vercel Settings");
-
-    const configData = config.config as any;
-    const style = configData?.style || 'oxford';
-    const skeletonUrl = SKELETON_IMAGES[config.gender]?.[style] || SKELETON_IMAGES.men.oxford;
-
-    onProgress?.(10);
-    const initImage = await imageToBase64(skeletonUrl);
-    
-    onProgress?.(40);
-    const prompt = `Professional product photo of ${config.gender}'s ${style.replace(/-/g, ' ')} shoe, ${configData.material?.replace(/-/g, ' ')} material, ${configData.color?.replace(/-/g, ' ')} color, white background, studio lighting.`;
-
-    // The 'as any' bypasses the Vercel build error you had earlier
-    const result: any = await (generateAsync as any)({
-      prompt,
-      negativePrompt: NEGATIVE_PROMPT,
-      initImage,
-      apiKey: STABILITY_API_KEY,
-      width: 1024,
-      height: 1024,
-      steps: 30,
-      cfgScale: 7,
-      samples: 1,
-      imageStrength: 0.5,
-    });
-
-    if (result.images && result.images.length > 0) {
-      onProgress?.(100);
-      return { success: true, imageUrl: `data:image/png;base64,${result.images[0]}` };
-    }
-    throw new Error('No image returned');
-  } catch (err: any) {
-    return { success: false, error: err.message };
+export const generateImg2Img = async (
+  params: Img2ImgRequest
+): Promise<Img2ImgResponse> => {
+  if (!API_KEY) {
+    throw new Error('VITE_STABILITY_API_KEY not configured');
   }
-}
+
+  const imageBase64 = await fileToBase64(params.image);
+
+  const requestBody = {
+    text_prompts: [
+      { text: params.prompt, weight: 1.0 },
+      ...(params.negativePrompt
+        ? [{ text: params.negativePrompt, weight: -1.0 }]
+        : []),
+    ],
+    init_image: imageBase64,
+    strength: params.strength ?? 0.7,
+    steps: params.steps ?? 30,
+    cfg_scale: params.cfgScale ?? 7,
+    samples: params.samples ?? 1,
+    seed: params.seed ?? 0,
+    style_preset: params.stylePreset,
+  };
+
+  const engineId = 'stable-diffusion-xl-1024-v1-0';
+  
+  const response = await fetch(
+    `${API_HOST}/v1/generation/${engineId}/image-to-image`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify(requestBody),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Stability API error (${response.status}): ${errorText}`);
+  }
+
+  return response.json();
+};

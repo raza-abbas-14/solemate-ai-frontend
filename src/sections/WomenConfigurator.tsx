@@ -60,25 +60,71 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
   
   const handleGenerate = async () => {
     if (!designStore.isConfigComplete()) return;
-    
+
     designStore.startGenerating();
-    
+
     try {
-      const { generateShoeImage } = await import('@/services/aiService');
+      const { generateImg2Img } = await import('@/services/aiService');
       const config = designStore.getConfiguration();
       if (!config) return;
-      
-      const result = await generateShoeImage(config, (progress) => {
-        designStore.updateProgress(progress);
+
+      const configData = config.config as Record<string, string>;
+
+      // Build prompt from selected options
+      const materialMap: Record<string, string> = {
+        'full-grain-leather': 'full-grain leather', 'premium-suede': 'premium suede',
+        'patent-leather': 'glossy patent leather', 'nappa-leather': 'soft nappa leather',
+        'canvas': 'canvas', 'genuine-leather': 'genuine leather',
+        'luxury-velvet': 'luxury velvet', 'raw-silk': 'raw silk', 'brocade': 'brocade fabric',
+      };
+      const colorMap: Record<string, string> = {
+        'classic-black': 'black', 'bridal-maroon': 'deep maroon', 'royal-blue': 'royal blue',
+        'emerald-green': 'emerald green', 'champagne-gold': 'champagne gold',
+        'ivory-white': 'ivory white', 'nude-beige': 'nude beige',
+        'chocolate-brown': 'chocolate brown', 'navy-blue': 'navy blue', 'burgundy': 'burgundy',
+      };
+      const material = materialMap[configData?.material] || configData?.material || 'leather';
+      const color = colorMap[configData?.color] || configData?.color || 'black';
+      const prompt = `professional product photography of a premium handcrafted ${color} ${material} women's shoe, plain white background, studio lighting, photorealistic, 4k, high quality`;
+
+      // Get skeleton image as blob
+      const skeletonMap: Record<string, string> = {
+        'khussa': '/images/skeletons/women/khussa-base.jpg',
+        'pump': '/images/skeletons/women/pump-base.jpg',
+        'block-heel': '/images/skeletons/women/block-heel-base.jpg',
+        'stiletto': '/images/skeletons/women/stiletto-base.jpg',
+        'kolhapuri': '/images/skeletons/women/khussa-base.jpg',
+        'mules': '/images/skeletons/women/pump-base.jpg',
+        'jutti': '/images/skeletons/women/khussa-base.jpg',
+        'wedge': '/images/skeletons/women/block-heel-base.jpg',
+      };
+      const skeletonUrl = skeletonMap[configData?.style] || '/images/skeletons/women/khussa-base.jpg';
+
+      designStore.updateProgress(20);
+      const skeletonResponse = await fetch(skeletonUrl);
+      const skeletonBlob = await skeletonResponse.blob();
+      designStore.updateProgress(40);
+
+      const result = await generateImg2Img({
+        image: skeletonBlob,
+        prompt,
+        negativePrompt: 'blurry, distorted, low quality, deformed, cartoon, text, watermark, change shape, alter silhouette',
+        strength: 0.65,
+        steps: 30,
+        cfgScale: 7,
       });
-      
-      if (result.imageUrl) {
-        designStore.setGeneratedImage(result.imageUrl);
+
+      designStore.updateProgress(95);
+
+      if (result.artifacts && result.artifacts.length > 0) {
+        const generatedImageUrl = `data:image/png;base64,${result.artifacts[0].base64}`;
+        designStore.setGeneratedImage(generatedImageUrl);
       }
+
     } catch (error) {
       console.error('Generation failed:', error);
     }
-    
+
     designStore.stopGenerating();
   };
   
@@ -227,7 +273,7 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
       </div>
       
       {/* Options Section */}
-      <div className="flex-1 p-4 pb-40">
+      <div className="flex-1 p-4 pb-56">
         <div className="mb-4">
           <h2 className="text-lg font-semibold text-slate-900">
             {currentStep === 'category' ? 'Choose Your Style' : `Select ${WOMEN_STEP_LABELS[currentStepIndex]}`}
