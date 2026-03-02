@@ -2,7 +2,7 @@
 import { generateAsync } from 'stability-client';
 import type { ShoeConfiguration } from '@/types';
 
-// The ONLY way to access keys in a Vite project on Vercel
+// VITE REQUIREMENT: Use import.meta.env, not process.env
 const STABILITY_API_KEY = import.meta.env.VITE_STABILITY_API_KEY;
 
 const SKELETON_IMAGES: Record<string, Record<string, string>> = {
@@ -46,19 +46,19 @@ export async function generateShoeImage(
   onProgress?: (progress: number) => void
 ): Promise<{ success: boolean; imageUrl?: string; error?: string }> {
   try {
-    if (!STABILITY_API_KEY) throw new Error("Missing API Key");
+    if (!STABILITY_API_KEY) throw new Error("API Key Missing in Vercel Settings");
 
     const configData = config.config as any;
-    const style = configData?.style || '';
+    const style = configData?.style || 'oxford';
     const skeletonUrl = SKELETON_IMAGES[config.gender]?.[style] || SKELETON_IMAGES.men.oxford;
 
     onProgress?.(10);
     const initImage = await imageToBase64(skeletonUrl);
     
     onProgress?.(40);
-    const prompt = `Professional product photo of ${config.gender}'s ${style.replace(/-/g, ' ')} shoe, ${configData.material?.replace(/-/g, ' ')} material, ${configData.color?.replace(/-/g, ' ')} color, white background, studio lighting, photorealistic.`;
+    const prompt = `Professional product photo of ${config.gender}'s ${style.replace(/-/g, ' ')} shoe, ${configData.material?.replace(/-/g, ' ')} material, ${configData.color?.replace(/-/g, ' ')} color, white background, studio lighting.`;
 
-    // Force TypeScript to ignore errors by using 'as any'
+    // The 'as any' bypasses the Vercel build error you had earlier
     const result: any = await (generateAsync as any)({
       prompt,
       negativePrompt: NEGATIVE_PROMPT,
