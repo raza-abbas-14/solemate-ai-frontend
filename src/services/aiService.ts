@@ -7,18 +7,10 @@ if (!API_KEY) {
   console.warn('VITE_STABILITY_API_KEY not set');
 }
 
-const fileToBase64 = (file: File | Blob): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = () => {
-      const base64 = (reader.result as string).split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-  });
-};
-
+/**
+ * Stability AI Img2Img generation using FormData (multipart/form-data)
+ * This is REQUIRED by the Stability AI API - JSON format is not accepted
+ */
 export const generateImg2Img = async (
   params: Img2ImgRequest
 ): Promise<Img2ImgResponse> => {
@@ -26,23 +18,32 @@ export const generateImg2Img = async (
     throw new Error('VITE_STABILITY_API_KEY not configured');
   }
 
-  const imageBase64 = await fileToBase64(params.image);
+  const formData = new FormData();
+  
+  // Append the image file directly (must be File or Blob)
+  formData.append('init_image', params.image);
+  
+  // Append text prompts as individual form fields (NOT JSON string)
+  // Stability API expects: text_prompts[0][text], text_prompts[0][weight]
+  formData.append('text_prompts[0][text]', params.prompt);
+  formData.append('text_prompts[0][weight]', '1.0');
+  
+  // Add negative prompt if provided
+  if (params.negativePrompt) {
+    formData.append('text_prompts[1][text]', params.negativePrompt);
+    formData.append('text_prompts[1][weight]', '-1.0');
+  }
 
-  const requestBody = {
-    text_prompts: [
-      { text: params.prompt, weight: 1.0 },
-      ...(params.negativePrompt
-        ? [{ text: params.negativePrompt, weight: -1.0 }]
-        : []),
-    ],
-    init_image: imageBase64,
-    strength: params.strength ?? 0.7,
-    steps: params.steps ?? 30,
-    cfg_scale: params.cfgScale ?? 7,
-    samples: params.samples ?? 1,
-    seed: params.seed ?? 0,
-    style_preset: params.stylePreset,
-  };
+  // Append other parameters
+  formData.append('strength', String(params.strength ?? 0.65));
+  formData.append('steps', String(params.steps ?? 30));
+  formData.append('cfg_scale', String(params.cfgScale ?? 7));
+  formData.append('samples', String(params.samples ?? 1));
+  formData.append('seed', String(params.seed ?? 0));
+  
+  if (params.stylePreset) {
+    formData.append('style_preset', params.stylePreset);
+  }
 
   const engineId = 'stable-diffusion-xl-1024-v1-0';
   
@@ -51,11 +52,11 @@ export const generateImg2Img = async (
     {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Accept: 'application/json',
         Authorization: `Bearer ${API_KEY}`,
+        // NOTE: Do NOT set Content-Type - browser sets it automatically with boundary
       },
-      body: JSON.stringify(requestBody),
+      body: formData,
     }
   );
 
