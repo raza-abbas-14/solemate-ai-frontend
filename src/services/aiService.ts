@@ -16,21 +16,26 @@ export const generateImg2Img = async (
 
   const formData = new FormData();
   
-  // Append the image file directly (must be 'init_image')
+  // Append the image file
   formData.append('init_image', params.image);
   
-  // Append text prompts as JSON string (must be 'text_prompts')
-  formData.append(
-    'text_prompts',
-    JSON.stringify([
-      { text: params.prompt, weight: 1.0 },
-      ...(params.negativePrompt
-        ? [{ text: params.negativePrompt, weight: -1.0 }]
-        : []),
-    ])
-  );
+  // Build prompts array
+  const prompts = [
+    { text: params.prompt, weight: 1.0 },
+  ];
+  
+  if (params.negativePrompt) {
+    prompts.push({ text: params.negativePrompt, weight: -1.0 });
+  }
 
-  // Stability AI expects these exact field names (snake_case)
+  // Send text_prompts as individual array items (NOT JSON string)
+  // Format: text_prompts[0][text], text_prompts[0][weight], etc.
+  prompts.forEach((prompt, index) => {
+    formData.append(`text_prompts[${index}][text]`, prompt.text);
+    formData.append(`text_prompts[${index}][weight]`, String(prompt.weight));
+  });
+
+  // Other parameters
   formData.append('strength', String(params.strength ?? 0.7));
   formData.append('steps', String(params.steps ?? 30));
   formData.append('cfg_scale', String(params.cfgScale ?? 7));
@@ -50,7 +55,6 @@ export const generateImg2Img = async (
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${API_KEY}`,
-        // DO NOT set Content-Type - browser sets it automatically with boundary
       },
       body: formData,
     }
