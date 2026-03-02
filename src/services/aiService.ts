@@ -62,45 +62,29 @@ export async function generateShoeImage(
     onProgress?.(10);
     const prompt = buildPrompt(config);
 
-    // Step 1: Start prediction via our Vercel backend
-    const startRes = await fetch('/api/generate', {
+    onProgress?.(40); // Show progress while Hugging Face thinks
+
+    // Call our newly updated Vercel backend
+    const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt }),
     });
 
-    if (!startRes.ok) throw new Error(`Start failed: ${startRes.status}`);
+    const data = await response.json();
 
-    const { predictionId, token } = await startRes.json();
-    onProgress?.(30);
-
-    // Step 2: Poll Replicate directly from browser
-    for (let i = 0; i < 40; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      
-      const pollRes = await fetch(
-        `https://api.replicate.com/v1/predictions/${predictionId}`,
-        { headers: { 'Authorization': `Token ${token}` } }
-      );
-      
-      const result = await pollRes.json();
-      onProgress?.(30 + i * 2);
-
-      if (result.status === 'succeeded' && result.output) {
-        const imageUrl = Array.isArray(result.output) ? result.output[0] : result.output;
-        onProgress?.(100);
-        return { success: true, imageUrl };
-      }
-
-      if (result.status === 'failed') {
-        throw new Error(result.error || 'Generation failed');
-      }
+    if (!response.ok) {
+      throw new Error(data.error || `Generation failed with status: ${response.status}`);
     }
 
-    throw new Error('Timeout');
+    onProgress?.(100);
+    
+    // Hugging Face gives us the image directly, no polling needed!
+    return { success: true, imageUrl: data.imageUrl };
 
   } catch (error) {
     console.error('AI Error:', error);
+    // If anything fails, safely fall back to the built-in skeleton image
     return { success: true, imageUrl: skeletonUrl, error: String(error) };
   }
 }

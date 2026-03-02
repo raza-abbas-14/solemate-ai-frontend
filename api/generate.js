@@ -1,6 +1,5 @@
-// Just STARTS the Replicate prediction and returns the ID
-// Browser then polls Replicate directly for the result
 export default async function handler(req, res) {
+  // Allow the frontend to talk to this backend
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -8,40 +7,39 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const REPLICATE_TOKEN = process.env.VITE_REPLICATE_TOKEN;
-  if (!REPLICATE_TOKEN) return res.status(500).json({ error: 'No token' });
+  // Look for the new Hugging Face token
+  const HF_TOKEN = process.env.VITE_HUGGINGFACE_TOKEN;
+  if (!HF_TOKEN) return res.status(500).json({ error: 'No Hugging Face token found in Vercel' });
 
   try {
     const { prompt } = req.body;
 
-    const startRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${REPLICATE_TOKEN}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        input: {
-          prompt: prompt,
-          num_outputs: 1,
-          output_format: 'webp',
-          output_quality: 80,
+    // Call the exact same FLUX model, but on Hugging Face's free servers
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell",
+      {
+        headers: {
+          Authorization: `Bearer ${HF_TOKEN}`,
+          "Content-Type": "application/json",
         },
-      }),
-    });
+        method: "POST",
+        body: JSON.stringify({ inputs: prompt }),
+      }
+    );
 
-    if (!startRes.ok) {
-      const err = await startRes.text();
+    if (!response.ok) {
+      const err = await response.text();
       return res.status(500).json({ error: err });
     }
 
-    const prediction = await startRes.json();
-    // Return prediction ID immediately — browser will poll
-    return res.status(200).json({ 
-      success: true, 
-      predictionId: prediction.id,
-      token: REPLICATE_TOKEN
-    });
+    // Hugging Face sends back raw image data. We convert it to a format the browser can show.
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64Image = buffer.toString('base64');
+    const imageUrl = `data:image/jpeg;base64,${base64Image}`;
+
+    // Send the finished image directly back to the website
+    return res.status(200).json({ success: true, imageUrl: imageUrl });
 
   } catch (error) {
     return res.status(500).json({ error: String(error) });
