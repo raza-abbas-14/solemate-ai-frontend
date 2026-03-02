@@ -1,5 +1,11 @@
+// @ts-ignore
+import { generateAsync } from 'stability-client';
 import type { ShoeConfiguration } from '@/types';
 
+// Pull the key directly from Vite environment variables as documented
+const STABILITY_API_KEY = import.meta.env.VITE_STABILITY_API_KEY;
+
+// Your actual local skeleton image paths
 const SKELETON_IMAGES: Record<string, Record<string, string>> = {
   men: {
     'penny-loafer':   '/images/skeletons/men/classic-penny-base.jpg',
@@ -23,6 +29,9 @@ const SKELETON_IMAGES: Record<string, Record<string, string>> = {
   },
 };
 
+// Official negative prompt from AI_Integration_Guide.pdf Page 2
+const NEGATIVE_PROMPT = 'change shape, alter silhouette, 3D render, impossible physics, floating elements, morphing, extra straps, deformed sole, digital art, cartoon, illustration, blurry, low quality, distorted, ugly, deformed, unrealistic proportions, multiple shoes, background objects, text, watermark, logo';
+
 export function getSkeletonImage(config: ShoeConfiguration): string {
   const configData = config.config as unknown as Record<string, string>;
   const style = configData?.style || '';
@@ -33,23 +42,27 @@ export function getSkeletonImage(config: ShoeConfiguration): string {
     : '/images/skeletons/women/khussa-base.jpg');
 }
 
+// Convert image URL to base64 for Img2Img input (from Guide Page 2)
+async function imageToBase64(url: string): Promise<string> {
+  const response = await fetch(url);
+  const blob = await response.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
 function buildPrompt(config: ShoeConfiguration): string {
   const configData = config.config as unknown as Record<string, string>;
-  const materialMap: Record<string, string> = {
-    'full-grain-leather': 'full-grain leather', 'premium-suede': 'premium suede',
-    'patent-leather': 'glossy patent leather', 'nappa-leather': 'soft nappa leather',
-    'canvas': 'canvas', 'genuine-leather': 'genuine leather',
-    'luxury-velvet': 'luxury velvet', 'raw-silk': 'raw silk', 'brocade': 'brocade fabric',
-  };
-  const colorMap: Record<string, string> = {
-    'classic-black': 'black', 'bridal-maroon': 'deep maroon', 'royal-blue': 'royal blue',
-    'emerald-green': 'emerald green', 'champagne-gold': 'champagne gold',
-    'ivory-white': 'ivory white', 'nude-beige': 'nude beige',
-    'chocolate-brown': 'chocolate brown', 'navy-blue': 'navy blue', 'burgundy': 'burgundy',
-  };
-  const material = materialMap[configData?.material] || configData?.material || 'leather';
-  const color = colorMap[configData?.color] || configData?.color || 'black';
-  return `professional product photo of a ${color} ${material} shoe, plain white background, studio lighting, photorealistic, 4k, high quality`;
+  const gender = config.gender;
+  const style = (configData?.style || 'shoe').replace(/-/g, ' ');
+  const material = (configData?.material || 'leather').replace(/-/g, ' ');
+  const color = (configData?.color || 'black').replace(/-/g, ' ');
+
+  // Official prompt structure from AI_Setup_Guide.pdf Page 3
+  return `Professional product photography of ${gender}'s ${style} made of ${material} in ${color} color. Plain white background, studio lighting, high-end fashion catalog style, sharp focus, photorealistic, commercial product shot, 4K quality.`;
 }
 
 export async function generateShoeImage(
@@ -59,34 +72,40 @@ export async function generateShoeImage(
   const skeletonUrl = getSkeletonImage(config);
 
   try {
+    if (!STABILITY_API_KEY) throw new Error("Missing STABILITY_API_KEY in environment");
+
     onProgress?.(10);
+    const initImage = await imageToBase64(skeletonUrl);
+    
+    onProgress?.(30);
     const prompt = buildPrompt(config);
 
-    onProgress?.(40); // Show progress while Hugging Face thinks
-
-    // Call our newly updated Vercel backend
-    const response = await fetch('/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+    onProgress?.(50);
+    // Exact API call parameters from AI_Integration_Guide.pdf Page 3
+    const result = await generateAsync({
+      prompt: prompt,
+      negativePrompt: NEGATIVE_PROMPT,
+      initImage: initImage,
+      apiKey: STABILITY_API_KEY,
+      width: 1024,
+      height: 1024,
+      steps: 30,
+      cfgScale: 7,
+      samples: 1,
+      imageStrength: 0.5, // Critical: Preserves shape while applying textures
     });
 
-    const data = await response.json();
+    onProgress?.(80);
 
-    if (!response.ok) {
-      throw new Error(data.error || `Generation failed with status: ${response.status}`);
+    if (result.images && result.images.length > 0) {
+      onProgress?.(100);
+      return { success: true, imageUrl: `data:image/png;base64,${result.images[0]}` };
     }
 
-    onProgress?.(100);
-    
-    // Hugging Face gives us the image directly, no polling needed!
-    return { success: true, imageUrl: data.imageUrl };
+    throw new Error('Image generation failed to return data.');
 
   } catch (error) {
     console.error('AI Error:', error);
-    // If anything fails, safely fall back to the built-in skeleton image
-    return { success: true, imageUrl: skeletonUrl, error: String(error) };
+    return { success: false, imageUrl: skeletonUrl, error: String(error) };
   }
 }
-
-export { SKELETON_IMAGES };
