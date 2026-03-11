@@ -322,8 +322,8 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
                 className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${getSelectedValue() === option.value
-                    ? 'border-amber-600 shadow-lg shadow-amber-500/20'
-                    : 'border-slate-200 hover:border-amber-400'
+                  ? 'border-amber-600 shadow-lg shadow-amber-500/20'
+                  : 'border-slate-200 hover:border-amber-400'
                   }`}
               >
                 <div className="aspect-square bg-slate-100">
@@ -368,16 +368,16 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
                 key={color.value}
                 onClick={() => handleSelect(color.value)}
                 className={`aspect-square rounded-xl border-2 transition-all ${menConfig.color === color.value
-                    ? 'border-amber-600 scale-110 shadow-lg'
-                    : 'border-slate-200 hover:border-amber-400'
+                  ? 'border-amber-600 scale-110 shadow-lg'
+                  : 'border-slate-200 hover:border-amber-400'
                   }`}
                 style={{ backgroundColor: color.hex }}
                 title={color.label}
               >
                 {menConfig.color === color.value && (
                   <Check className={`w-6 h-6 mx-auto ${['black', 'dark-brown', 'chocolate-brown', 'navy-blue', 'burgundy'].includes(color.value)
-                      ? 'text-white'
-                      : 'text-slate-800'
+                    ? 'text-white'
+                    : 'text-slate-800'
                     }`} />
                 )}
               </button>
@@ -393,8 +393,8 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
                 key={size}
                 onClick={() => handleSelect(size.toString())}
                 className={`aspect-square rounded-xl font-semibold text-lg transition-all ${menConfig.size === size
-                    ? 'bg-gradient-to-br from-amber-600 to-amber-500 text-white shadow-lg'
-                    : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-amber-400'
+                  ? 'bg-gradient-to-br from-amber-600 to-amber-500 text-white shadow-lg'
+                  : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-amber-400'
                   }`}
               >
                 {size}
@@ -427,7 +427,8 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
         </div>
 
         {/* Generate Preview Button — always visible when config complete */}
-        {designStore.isConfigComplete() && !isGenerating && (
+        {/* Generate Preview Button — only visible on the final step */}
+        {currentStepIndex === STEPS.length - 1 && designStore.isConfigComplete() && !isGenerating && (
           <Button
             onClick={handleGenerate}
             className="w-full mt-4 py-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold hover:from-purple-700 hover:to-indigo-700"

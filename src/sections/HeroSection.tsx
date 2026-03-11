@@ -42,10 +42,10 @@ export function HeroSection({ onStartDesigning, onLearnMore }: HeroSectionProps)
 
       {/* Main Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col lg:flex-row items-center min-h-[calc(100vh-4rem)] gap-12 py-12">
+        <div className="flex flex-col-reverse lg:flex-row items-center justify-between min-h-[calc(100vh-4rem)] gap-12 py-12">
 
           {/* Left: Text Content */}
-          <div className="flex-1 max-w-xl">
+          <div className="flex-1 w-full max-w-xl">
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 border border-amber-200 mb-6">
               <Sparkles className="w-4 h-4 text-amber-600" />
@@ -87,8 +87,8 @@ export function HeroSection({ onStartDesigning, onLearnMore }: HeroSectionProps)
           </div>
 
           {/* Right: Shoe Image Card */}
-          <div className="flex-1 relative flex justify-center items-center">
-            <div className="relative w-full max-w-lg">
+          <div className="flex-1 w-full relative flex justify-center items-center mt-8 lg:mt-0">
+            <div className="relative w-full max-w-lg aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-[450px]">
               <div className="rounded-3xl overflow-hidden shadow-2xl shadow-amber-100 border border-amber-100 relative h-80 sm:h-96 w-full">
                 {images.map((imgSrc, index) => (
                   <img

@@ -205,8 +205,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
             {womenConfig.category && (
               <div className="absolute top-3 right-3 z-10">
                 <Badge className={`text-white ${isEastern
-                    ? 'bg-gradient-to-r from-amber-600 to-amber-500'
-                    : 'bg-gradient-to-r from-rose-500 to-rose-400'
+                  ? 'bg-gradient-to-r from-amber-600 to-amber-500'
+                  : 'bg-gradient-to-r from-rose-500 to-rose-400'
                   }`}>
                   {isEastern ? (
                     <><Gem className="w-3 h-3 mr-1" />Eastern</>
@@ -290,8 +290,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
             <button
               onClick={() => handleSelect('eastern')}
               className={`p-5 rounded-xl border-2 text-left transition-all ${isEastern
-                  ? 'border-amber-600 bg-amber-50 shadow-lg shadow-amber-500/10'
-                  : 'border-slate-200 hover:border-amber-400'
+                ? 'border-amber-600 bg-amber-50 shadow-lg shadow-amber-500/10'
+                : 'border-slate-200 hover:border-amber-400'
                 }`}
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center mb-3">
@@ -305,8 +305,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
             <button
               onClick={() => handleSelect('western')}
               className={`p-5 rounded-xl border-2 text-left transition-all ${!isEastern && womenConfig.category
-                  ? 'border-rose-500 bg-rose-50 shadow-lg shadow-rose-500/10'
-                  : 'border-slate-200 hover:border-rose-400'
+                ? 'border-rose-500 bg-rose-50 shadow-lg shadow-rose-500/10'
+                : 'border-slate-200 hover:border-rose-400'
                 }`}
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center mb-3">
@@ -327,8 +327,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
                 className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${womenConfig.style === option.value
-                    ? 'border-rose-500 shadow-lg shadow-rose-500/20'
-                    : 'border-slate-200 hover:border-rose-400'
+                  ? 'border-rose-500 shadow-lg shadow-rose-500/20'
+                  : 'border-slate-200 hover:border-rose-400'
                   }`}
               >
                 <div className="aspect-square bg-slate-100">
@@ -356,8 +356,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
                 className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${womenConfig.material === option.value
-                    ? 'border-rose-500 shadow-lg shadow-rose-500/20'
-                    : 'border-slate-200 hover:border-rose-400'
+                  ? 'border-rose-500 shadow-lg shadow-rose-500/20'
+                  : 'border-slate-200 hover:border-rose-400'
                   }`}
               >
                 <div className="aspect-square bg-slate-100">
@@ -388,8 +388,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
                 className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${womenConfig.embellishment === option.value
-                    ? 'border-rose-500 shadow-lg shadow-rose-500/20'
-                    : 'border-slate-200 hover:border-rose-400'
+                  ? 'border-rose-500 shadow-lg shadow-rose-500/20'
+                  : 'border-slate-200 hover:border-rose-400'
                   }`}
               >
                 <div className="aspect-square bg-slate-100">
@@ -420,16 +420,16 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
                 key={color.value}
                 onClick={() => handleSelect(color.value)}
                 className={`aspect-square rounded-xl border-2 transition-all ${womenConfig.color === color.value
-                    ? 'border-rose-500 scale-110 shadow-lg'
-                    : 'border-slate-200 hover:border-rose-400'
+                  ? 'border-rose-500 scale-110 shadow-lg'
+                  : 'border-slate-200 hover:border-rose-400'
                   }`}
                 style={{ backgroundColor: color.hex }}
                 title={color.label}
               >
                 {womenConfig.color === color.value && (
                   <Check className={`w-6 h-6 mx-auto ${['black', 'dark-brown', 'chocolate-brown', 'navy-blue', 'burgundy'].includes(color.value)
-                      ? 'text-white'
-                      : 'text-slate-800'
+                    ? 'text-white'
+                    : 'text-slate-800'
                     }`} />
                 )}
               </button>
@@ -445,8 +445,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
                 key={size}
                 onClick={() => handleSelect(size.toString())}
                 className={`aspect-square rounded-xl font-semibold text-lg transition-all ${womenConfig.size === size
-                    ? 'bg-gradient-to-br from-rose-500 to-rose-400 text-white shadow-lg'
-                    : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-rose-400'
+                  ? 'bg-gradient-to-br from-rose-500 to-rose-400 text-white shadow-lg'
+                  : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-rose-400'
                   }`}
               >
                 {size}
@@ -473,7 +473,8 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
           )}
         </div>
 
-        {designStore.isConfigComplete() && !isGenerating && (
+        {/* Generate Preview Button — only visible on the final step */}
+        {currentStepIndex === STEPS.length - 1 && designStore.isConfigComplete() && !isGenerating && (
           <Button
             onClick={handleGenerate}
             className="w-full mt-4 py-6 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-lg font-semibold hover:from-purple-700 hover:to-indigo-700"
