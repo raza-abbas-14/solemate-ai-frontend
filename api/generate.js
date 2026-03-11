@@ -57,6 +57,9 @@ export default async function handler(req, res) {
         }
     } catch (error) {
         console.error('AI Generation Error:', error);
-        return res.status(500).json({ error: 'Failed to generate image via AI.', details: error.message });
+        return res.status(500).json({
+            error: `Replicate API Error: ${error.message || 'Unknown string error from Replicate'}`,
+            details: error.toString()
+        });
     }
 }
