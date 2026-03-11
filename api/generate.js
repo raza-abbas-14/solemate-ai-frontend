@@ -56,7 +56,8 @@ export default async function handler(req, res) {
         // If an init image is provided for Img2Img mapping
         if (image) {
             inputParams.image = image;
-            inputParams.prompt_strength = 0.7;
+            // 0.85 gives the AI heavy freedom to override the template's grey color with the user's chosen color
+            inputParams.prompt_strength = 0.85;
         }
 
         const output = await replicate.run(
