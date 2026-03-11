@@ -18,6 +18,20 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    // ------------------------------------------------------------------------------------------------ //
+    // 🛡️ STRICT SECURITY SHIELD: Block Hackers/Bots from draining Replicate credits
+    // This absolutely guarantees that ONLY your official Vercel Website or Local PC can trigger the AI
+    // ------------------------------------------------------------------------------------------------ //
+    const origin = req.headers.origin || req.headers.referer || '';
+    const isLocal = origin.includes('localhost');
+    const isProd = origin.includes('solemate-ai-frontend.vercel.app');
+
+    if (!isLocal && !isProd) {
+        console.warn(`[SECURITY] Blocked unauthorized AI generation attempt from origin: ${origin}`);
+        return res.status(403).json({ error: 'Forbidden: Unauthorized Origin. API access is strictly locked to the SoleMate website.' });
+    }
+    // ------------------------------------------------------------------------------------------------ //
+
     try {
         const { prompt, negative_prompt, image } = req.body;
 
