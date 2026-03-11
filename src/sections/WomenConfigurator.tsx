@@ -85,7 +85,12 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
       };
       const material = materialMap[configData?.material] || configData?.material || 'leather';
       const color = colorMap[configData?.color] || configData?.color || 'black';
-      const prompt = `masterpiece, professional 3D product photography of a premium handcrafted ${color} ${color} ${material} women's shoe. Ensure the entire shoe is exactly ${color}. Show the shoe from an isometric 3/4 angle, showing both the front and side profile. Plain white background, vibrant colors, highly detailed, photorealistic, 8k resolution, studio lighting.`;
+
+      const embellishment = configData?.embellishment && configData.embellishment !== 'plain'
+        ? `featuring highly detailed ${configData.embellishment.replace('-', ' ')} embellishments`
+        : '';
+
+      const prompt = `masterpiece, professional 3D product photography of a premium handcrafted ${color} ${color} ${material} women's shoe ${embellishment}. Ensure the entire shoe is exactly ${color} ${embellishment}. Show the shoe from an isometric 3/4 angle, showing both the front and side profile. Plain white background, vibrant colors, highly detailed, photorealistic, 8k resolution, studio lighting.`;
 
       // Get skeleton image as blob
       const skeletonMap: Record<string, string> = {
@@ -259,6 +264,11 @@ export function WomenConfigurator({ designStore, onReviewOrder, onBack }: WomenC
               {womenConfig.color && (
                 <Badge variant="secondary" className="text-xs bg-slate-100">
                   {PAKISTANI_COLORS.find(c => c.value === womenConfig.color)?.label}
+                </Badge>
+              )}
+              {womenConfig.embellishment && womenConfig.embellishment !== 'plain' && (
+                <Badge variant="secondary" className="text-xs bg-slate-100">
+                  {getEmbellishmentOptions().find(e => e.value === womenConfig.embellishment)?.label || womenConfig.embellishment}
                 </Badge>
               )}
               {womenConfig.size && (

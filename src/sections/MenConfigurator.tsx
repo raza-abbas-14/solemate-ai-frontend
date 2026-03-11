@@ -84,7 +84,12 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
       };
       const material = materialMap[configData?.material] || configData?.material || 'leather';
       const color = colorMap[configData?.color] || configData?.color || 'black';
-      const prompt = `masterpiece, professional 3D product photography of a premium handcrafted ${color} ${color} ${material} men's shoe. Ensure the entire shoe is exactly ${color}. Show the shoe from an isometric 3/4 angle, showing both the front and side profile. Plain white background, vibrant colors, highly detailed, photorealistic, 8k resolution, studio lighting.`;
+
+      const detail = configData?.detail && configData.detail !== 'plain'
+        ? `featuring a detailed ${configData.detail.replace('-', ' ')} accent`
+        : '';
+
+      const prompt = `masterpiece, professional 3D product photography of a premium handcrafted ${color} ${color} ${material} men's shoe ${detail}. Ensure the entire shoe is exactly ${color}. Show the shoe from an isometric 3/4 angle, showing both the front and side profile. Plain white background, vibrant colors, highly detailed, photorealistic, 8k resolution, studio lighting.`;
 
       // Get skeleton image as blob
       const skeletonMap: Record<string, string> = {
@@ -286,6 +291,11 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               {menConfig.color && (
                 <Badge variant="secondary" className="text-xs bg-slate-100">
                   {PAKISTANI_COLORS.find(c => c.value === menConfig.color)?.label}
+                </Badge>
+              )}
+              {menConfig.detail && menConfig.detail !== 'plain' && (
+                <Badge variant="secondary" className="text-xs bg-slate-100">
+                  {designStore.getAvailableDetails().find(d => d.value === menConfig.detail)?.label || menConfig.detail}
                 </Badge>
               )}
               {menConfig.size && (
