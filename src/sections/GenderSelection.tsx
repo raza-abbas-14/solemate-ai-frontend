@@ -11,24 +11,8 @@ interface GenderSelectionProps {
 export function GenderSelection({ onSelectGender }: GenderSelectionProps) {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-amber-50/30 flex flex-col">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                <Sparkles className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold font-playfair bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent">
-                SoleMate AI
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Main Content */}
-      <main className="flex-1 flex items-center justify-center pt-16 px-4 sm:px-6 lg:px-8">
+      <main className="flex-1 flex items-center justify-center pt-24 pb-12 px-4 sm:px-6 lg:px-8">
         <div className="w-full max-w-5xl">
           {/* Title */}
           <div className="text-center mb-12">
@@ -54,7 +38,7 @@ export function GenderSelection({ onSelectGender }: GenderSelectionProps) {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                
+
                 <div className="absolute top-4 left-4">
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-rose-500 text-white text-sm font-medium">
                     Women
@@ -69,7 +53,7 @@ export function GenderSelection({ onSelectGender }: GenderSelectionProps) {
                 <p className="text-white/80 text-sm mb-4">
                   Khussas, heels, sandals & more. From everyday essentials to luxe bridal wear.
                 </p>
-                
+
                 <div className="flex items-center gap-2 text-amber-400 font-medium">
                   <span>Start Designing</span>
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
@@ -89,7 +73,7 @@ export function GenderSelection({ onSelectGender }: GenderSelectionProps) {
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-                
+
                 <div className="absolute top-4 left-4">
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-600 text-white text-sm font-medium">
                     Men
@@ -104,7 +88,7 @@ export function GenderSelection({ onSelectGender }: GenderSelectionProps) {
                 <p className="text-white/80 text-sm mb-4">
                   Loafers, Oxfords, Chelsea Boots, and Loro Piana style. Hand-stitched by master artisans.
                 </p>
-                
+
                 <div className="flex items-center gap-2 text-amber-400 font-medium">
                   <span>Start Designing</span>
                   <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />

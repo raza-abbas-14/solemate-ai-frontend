@@ -1,69 +1,65 @@
 import type { Img2ImgRequest, Img2ImgResponse } from '../types/stability';
 
-const API_KEY = import.meta.env.VITE_STABILITY_API_KEY;
-const API_HOST = import.meta.env.VITE_STABILITY_API_HOST || 'https://api.stability.ai';
+// Securely route calls through Vercel Serverless integration
+const BACKEND_URL = '/api/generate';
 
-if (!API_KEY) {
-  console.warn('VITE_STABILITY_API_KEY not set');
-}
+const fileToBase64 = (file: File | Blob): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
 
 export const generateImg2Img = async (
   params: Img2ImgRequest
 ): Promise<Img2ImgResponse> => {
-  if (!API_KEY) {
-    throw new Error('VITE_STABILITY_API_KEY not configured');
+
+  let base64Image = '';
+  if (params.image instanceof File || params.image instanceof Blob) {
+    base64Image = await fileToBase64(params.image);
+  } else if (typeof params.image === 'string') {
+    base64Image = params.image;
   }
 
-  const formData = new FormData();
-  
-  // Append the image file
-  formData.append('init_image', params.image);
-  
-  // Build prompts array
-  const prompts = [
-    { text: params.prompt, weight: 1.0 },
-  ];
-  
-  if (params.negativePrompt) {
-    prompts.push({ text: params.negativePrompt, weight: -1.0 });
-  }
+  const payload = {
+    prompt: params.prompt,
+    negative_prompt: params.negativePrompt || '',
+    image: base64Image,
+    strength: params.strength ?? 0.7,
+  };
 
-  // Send text_prompts as individual array items (NOT JSON string)
-  // Format: text_prompts[0][text], text_prompts[0][weight], etc.
-  prompts.forEach((prompt, index) => {
-    formData.append(`text_prompts[${index}][text]`, prompt.text);
-    formData.append(`text_prompts[${index}][weight]`, String(prompt.weight));
+  const response = await fetch(BACKEND_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
   });
 
-  // Other parameters
-  formData.append('strength', String(params.strength ?? 0.7));
-  formData.append('steps', String(params.steps ?? 30));
-  formData.append('cfg_scale', String(params.cfgScale ?? 7));
-  formData.append('samples', String(params.samples ?? 1));
-  formData.append('seed', String(params.seed ?? 0));
-  
-  if (params.stylePreset) {
-    formData.append('style_preset', params.stylePreset);
-  }
-
-  const engineId = 'stable-diffusion-xl-1024-v1-0';
-  
-  const response = await fetch(
-    `${API_HOST}/v1/generation/${engineId}/image-to-image`,
-    {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${API_KEY}`,
-      },
-      body: formData,
-    }
-  );
-
   if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Stability API error (${response.status}): ${errorText}`);
+    const errorData = await response.json().catch(() => null);
+    throw new Error(`AI generation failed: ${errorData?.error || response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Replicate returns standard output URLs. 
+  // We fetch the resulting URL and mock the original Stability API Base64 response format 
+  // so the frontend seamlessly works without having to redesign all React components.
+  const imgResp = await fetch(data.imageUrl);
+  const blob = await imgResp.blob();
+  const resultBase64DataUri = await fileToBase64(blob);
+  const base64Raw = resultBase64DataUri.split(',')[1] || resultBase64DataUri;
+
+  return {
+    artifacts: [
+      {
+        base64: base64Raw,
+        seed: 0,
+        finishReason: 'SUCCESS'
+      }
+    ]
+  };
 };

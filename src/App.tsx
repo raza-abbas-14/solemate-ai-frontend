@@ -11,6 +11,7 @@ import { MenConfigurator } from '@/sections/MenConfigurator';
 import { WomenConfigurator } from '@/sections/WomenConfigurator';
 import { OrderReviewModal } from '@/components/OrderReviewModal';
 import { OrderSuccessModal } from '@/components/OrderSuccessModal';
+import { EidPromoModal } from '@/components/EidPromoModal';
 import { AdminDashboard } from '@/sections/AdminDashboard';
 import { useDesignStore } from '@/hooks/useDesignStore';
 import { useOrderStore } from '@/hooks/useOrderStore';
@@ -63,40 +64,40 @@ function App() {
     setAdminPassword('');
     setCurrentView('landing');
   };
-  
+
   const designStore = useDesignStore();
   const orderStore = useOrderStore();
-  
+
   const handleGenderSelect = (gender: Gender) => {
     designStore.setGender(gender);
     setCurrentView('configurator');
   };
-  
+
   const handleConfirmOrder = (customer: CustomerDetails, payment: PaymentDetails) => {
     const config = designStore.getConfiguration();
     const totalPrice = designStore.getCurrentPrice();
     const generatedImage = designStore.generatedImage || undefined;
-    
+
     if (config) {
       orderStore.createOrder(config, customer, payment, totalPrice, generatedImage);
       setShowOrderReview(false);
       setShowOrderSuccess(true);
     }
   };
-  
+
   const handleNewDesign = () => {
     designStore.resetAll();
     setShowOrderSuccess(false);
     setCurrentView('landing');
   };
-  
+
   const renderContent = () => {
     switch (currentView) {
       case 'landing':
         return (
           <>
-            <HeroSection 
-              onStartDesigning={() => setCurrentView('gender-select')} 
+            <HeroSection
+              onStartDesigning={() => setCurrentView('gender-select')}
               onLearnMore={() => {
                 const el = document.getElementById('about-section');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
@@ -105,7 +106,7 @@ function App() {
 
             {/* About / Learn More Section */}
             <AboutSection onStartDesigning={() => setCurrentView('gender-select')} />
-            
+
             {/* Footer */}
             <footer className="bg-slate-900 text-white py-12">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -146,27 +147,27 @@ function App() {
                   <div>
                     <h4 className="font-semibold mb-4">Follow Us</h4>
                     <div className="flex gap-3">
-                      <a 
-                        href="https://www.instagram.com/solemate.ai.14" 
-                        target="_blank" 
+                      <a
+                        href="https://www.instagram.com/solemate.ai.14"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-pink-600 transition-colors"
                         title="Instagram"
                       >
                         <span className="text-sm font-semibold">IG</span>
                       </a>
-                      <a 
-                        href="https://www.facebook.com/share/1FUfLKwN69/" 
-                        target="_blank" 
+                      <a
+                        href="https://www.facebook.com/share/1FUfLKwN69/"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-blue-600 transition-colors"
                         title="Facebook"
                       >
                         <span className="text-sm font-semibold">FB</span>
                       </a>
-                      <a 
-                        href="https://www.tiktok.com/@solemate.ai.14" 
-                        target="_blank" 
+                      <a
+                        href="https://www.tiktok.com/@solemate.ai.14"
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center hover:bg-black transition-colors border border-slate-700 hover:border-white"
                         title="TikTok"
@@ -186,7 +187,7 @@ function App() {
             </footer>
           </>
         );
-        
+
       case 'gender-select':
         return (
           <div>
@@ -214,7 +215,7 @@ function App() {
             </div>
           </div>
         );
-        
+
       case 'configurator':
         if (designStore.selectedGender === 'men') {
           return (
@@ -232,7 +233,7 @@ function App() {
             onBack={() => setCurrentView('gender-select')}
           />
         );
-        
+
       case 'admin-login':
         return (
           <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center p-4">
@@ -280,14 +281,23 @@ function App() {
           return null;
         }
         return <AdminDashboard orderStore={orderStore} onLogout={handleAdminLogout} />;
-        
+
       default:
         return null;
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
+
+      {/* Global Eid Promotional Interstitial Modal */}
+      <EidPromoModal
+        onDesignShoes={() => {
+          setCurrentView('gender-select');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
+      />
+
       {/* Navigation - Only show on landing */}
       {currentView === 'landing' && (
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200/50">
@@ -301,9 +311,9 @@ function App() {
                   SoleMate AI
                 </span>
               </div>
-              
+
               <div className="hidden md:flex items-center gap-8">
-                <Button 
+                <Button
                   onClick={() => setCurrentView('gender-select')}
                   className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
                 >
@@ -311,13 +321,13 @@ function App() {
                   Design Your Shoes
                 </Button>
               </div>
-              
+
               <button className="md:hidden p-2" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
                 {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </button>
             </div>
           </div>
-          
+
           {mobileMenuOpen && (
             <div className="md:hidden bg-white border-t border-slate-200 px-4 py-4 space-y-3">
               <Button onClick={() => { setCurrentView('gender-select'); setMobileMenuOpen(false); }} className="w-full bg-gradient-to-r from-amber-500 to-orange-600 text-white">
@@ -327,11 +337,11 @@ function App() {
           )}
         </nav>
       )}
-      
+
       <main className={currentView === 'landing' ? 'pt-16' : ''}>
         {renderContent()}
       </main>
-      
+
       {showOrderReview && (
         <OrderReviewModal
           designStore={designStore}
@@ -340,7 +350,7 @@ function App() {
           onConfirmOrder={handleConfirmOrder}
         />
       )}
-      
+
       {showOrderSuccess && (
         <OrderSuccessModal
           onNewDesign={handleNewDesign}

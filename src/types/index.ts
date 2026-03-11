@@ -3,7 +3,7 @@
 
 export type Gender = 'men' | 'women';
 export type WomenCategory = 'eastern' | 'western';
-export type PaymentMethod = 'cod' | 'easypaisa' | 'jazzcash';
+export type PaymentMethod = 'cod' | 'easypaisa' | 'jazzcash' | 'safepay-advance' | 'safepay-full';
 export type MaterialTier = 'normal' | 'premium';
 
 // Order Status for Admin Dashboard
@@ -148,6 +148,7 @@ export interface PaymentDetails {
   method: PaymentMethod;
   transactionId?: string;
   advanceAmount: number;
+  safepayReference?: string;
 }
 
 export interface Order {

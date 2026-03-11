@@ -1,6 +1,7 @@
 // SoleMate AI - Hero Section
 // Clean white background design with shoe image on right
 
+import { useState, useEffect } from 'react';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -10,6 +11,17 @@ interface HeroSectionProps {
 }
 
 export function HeroSection({ onStartDesigning, onLearnMore }: HeroSectionProps) {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const images = ['/images/hero-banner.jpg', '/images/Gemini.png'];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % images.length);
+    }, 3000); // Change image every 3 seconds
+
+    return () => clearInterval(interval);
+  }, [images.length]);
+
   const handleLearnMore = () => {
     if (onLearnMore) {
       onLearnMore();
@@ -37,20 +49,19 @@ export function HeroSection({ onStartDesigning, onLearnMore }: HeroSectionProps)
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-100 border border-amber-200 mb-6">
               <Sparkles className="w-4 h-4 text-amber-600" />
-              <span className="text-sm font-medium text-amber-700">AI-Powered Customization</span>
+              <span className="text-sm font-medium text-amber-700">Eid-ul-Fitr Exclusive</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight mb-4 text-gray-900">
               Design Your
-              <span className="block text-amber-500">Perfect Pair</span>
+              <span className="block text-amber-500">Perfect Eid Pair</span>
             </h1>
 
             {/* Description */}
             <p className="text-base sm:text-lg text-gray-500 mb-8 leading-relaxed">
-              Pakistan's first AI-powered shoe customization platform.
-              Design, visualize, and order bespoke footwear crafted by
-              local artisans.
+              Step into the festivities with Pakistan's first AI-powered shoe customization platform.
+              Craft bespoke premium footwear just in time for Eid.
             </p>
 
             {/* CTA Buttons */}
@@ -78,12 +89,16 @@ export function HeroSection({ onStartDesigning, onLearnMore }: HeroSectionProps)
           {/* Right: Shoe Image Card */}
           <div className="flex-1 relative flex justify-center items-center">
             <div className="relative w-full max-w-lg">
-              <div className="rounded-3xl overflow-hidden shadow-2xl shadow-amber-100 border border-amber-100">
-                <img
-                  src="/images/hero-cover.jpg"
-                  alt="Premium Pakistani Handcrafted Footwear"
-                  className="w-full h-80 sm:h-96 object-cover"
-                />
+              <div className="rounded-3xl overflow-hidden shadow-2xl shadow-amber-100 border border-amber-100 relative h-80 sm:h-96 w-full">
+                {images.map((imgSrc, index) => (
+                  <img
+                    key={imgSrc}
+                    src={imgSrc}
+                    alt="Premium Pakistani Handcrafted Footwear for Eid"
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out ${index === currentImageIndex ? 'opacity-100 z-10' : 'opacity-0 z-0'
+                      }`}
+                  />
+                ))}
                 {/* Logo overlay on image */}
                 <div className="absolute top-4 left-4 flex items-center gap-2 bg-black/20 backdrop-blur-sm rounded-xl px-3 py-2">
                   <Sparkles className="w-4 h-4 text-white" />

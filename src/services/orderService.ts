@@ -21,6 +21,8 @@ export interface Order {
   payment_method: string;
   total_price: number;
   notes?: string;
+  image_url?: string;
+  safepay_reference?: string;
   created_at?: string;
 }
 
@@ -65,6 +67,50 @@ export async function updateOrderStatus(orderId: string, status: string): Promis
     return false;
   }
   return true;
+}
+
+// Upload base64 image to Supabase Storage and return the public URL
+export async function uploadImageToStorage(base64Image: string): Promise<string | null> {
+  try {
+    // Determine the mime type from the base64 string
+    const match = base64Image.match(/^data:(image\/[^;]+);base64,/);
+    if (!match) {
+      console.error('Invalid base64 image format');
+      return null;
+    }
+
+    const mimeType = match[1];
+    const base64Data = base64Image.replace(/^data:image\/[^;]+;base64,/, '');
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+
+    const fileName = `design_${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('designs') // Creating a bucket named 'designs'
+      .upload(fileName, blob, {
+        contentType: mimeType,
+      });
+
+    if (uploadError) {
+      console.error('Error uploading image to storage:', uploadError);
+      return null;
+    }
+
+    const { data } = supabase.storage
+      .from('designs')
+      .getPublicUrl(fileName);
+
+    return data.publicUrl;
+  } catch (error) {
+    console.error('Unexpected error uploading to storage:', error);
+    return null;
+  }
 }
 
 // Generate order number
