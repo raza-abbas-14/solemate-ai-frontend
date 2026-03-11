@@ -31,19 +31,19 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const currentStep = STEPS[currentStepIndex];
   const { menConfig, isGenerating, generatedImage, generationProgress } = designStore;
-  
+
   const goToNextStep = useCallback(() => {
     if (currentStepIndex < STEPS.length - 1) {
       setCurrentStepIndex(prev => prev + 1);
     }
   }, [currentStepIndex]);
-  
+
   const goToPrevStep = useCallback(() => {
     if (currentStepIndex > 0) {
       setCurrentStepIndex(prev => prev - 1);
     }
   }, [currentStepIndex]);
-  
+
   const isCurrentStepComplete = () => {
     switch (currentStep) {
       case 'style': return menConfig.style !== null;
@@ -55,7 +55,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
       default: return false;
     }
   };
-  
+
   const handleGenerate = async () => {
     if (!designStore.isConfigComplete()) return;
 
@@ -84,7 +84,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
       };
       const material = materialMap[configData?.material] || configData?.material || 'leather';
       const color = colorMap[configData?.color] || configData?.color || 'black';
-      const prompt = `professional product photography of a premium handcrafted ${color} ${material} ${gender}'s shoe, plain white background, studio lighting, photorealistic, 4k, high quality`;
+      const prompt = `masterpiece, professional 3D product photography of a premium handcrafted ${color} ${color} ${material} men's shoe. Ensure the entire shoe is exactly ${color}. Show the shoe from an isometric 3/4 angle, showing both the front and side profile. Plain white background, vibrant colors, highly detailed, photorealistic, 8k resolution, studio lighting.`;
 
       // Get skeleton image as blob
       const skeletonMap: Record<string, string> = {
@@ -126,7 +126,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
 
     designStore.stopGenerating();
   };
-  
+
   // Get available options based on current style selection
   const getMaterialOptions = () => {
     if (menConfig.style && isLoroPiana(menConfig.style)) {
@@ -135,11 +135,11 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
     }
     return designStore.getAvailableMaterials();
   };
-  
+
   const getDetailOptions = () => {
     return designStore.getAvailableDetails();
   };
-  
+
   const getStepOptions = () => {
     switch (currentStep) {
       case 'style': return MEN_STYLE_OPTIONS;
@@ -149,7 +149,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
       default: return [];
     }
   };
-  
+
   const getSelectedValue = () => {
     switch (currentStep) {
       case 'style': return menConfig.style;
@@ -161,7 +161,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
       default: return null;
     }
   };
-  
+
   const handleSelect = (value: string) => {
     // Reset generated image whenever customer changes anything
     designStore.setGeneratedImage('');
@@ -195,7 +195,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
   // Get style note if applicable
   const styleNote = menConfig.style ? getStyleNote(menConfig.style) : null;
   const isPlainOnly = menConfig.style ? requiresPlainDesign(menConfig.style) : false;
-  
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
@@ -205,28 +205,28 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
             <ArrowLeft className="w-5 h-5 mr-1" />
             <span className="text-sm font-medium">Back</span>
           </button>
-          
+
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center">
               <span className="text-white text-xs font-bold">M</span>
             </div>
             <span className="font-semibold text-slate-900 hidden sm:block">Men&apos;s Collection</span>
           </div>
-          
+
           <div className="text-sm text-slate-500">
             {currentStepIndex + 1}/{STEPS.length}
           </div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="h-1 bg-slate-100">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all duration-300"
             style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }}
           />
         </div>
       </header>
-      
+
       {/* Sticky Preview Section - Mobile Optimized */}
       <div className="sticky top-[57px] z-30 bg-slate-50 border-b border-slate-200">
         <div className="p-4">
@@ -240,7 +240,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
                 <p className="text-sm font-medium text-slate-700">AI Generating...</p>
                 <p className="text-xs text-slate-500">{generationProgress}%</p>
                 <div className="w-32 h-2 bg-slate-100 rounded-full mt-2 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-amber-600 to-amber-500 transition-all"
                     style={{ width: `${generationProgress}%` }}
                   />
@@ -259,7 +259,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               </div>
             )}
           </div>
-          
+
           {/* Style Note Alert */}
           {styleNote && (
             <Alert className="mt-3 max-w-[280px] mx-auto bg-amber-50 border-amber-200">
@@ -269,7 +269,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               </AlertDescription>
             </Alert>
           )}
-          
+
           {/* Design Summary */}
           {designStore.isConfigComplete() && (
             <div className="mt-3 flex flex-wrap gap-2 justify-center">
@@ -297,7 +297,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
           )}
         </div>
       </div>
-      
+
       {/* Options Section */}
       <div className="flex-1 p-4 pb-56">
         <div className="mb-4">
@@ -313,7 +313,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
             </p>
           )}
         </div>
-        
+
         {/* Horizontal Scrolling Options */}
         {currentStep !== 'color' && currentStep !== 'size' && (
           <div className="flex gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-4 px-4">
@@ -321,15 +321,14 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               <button
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
-                className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${
-                  getSelectedValue() === option.value
+                className={`flex-shrink-0 w-36 rounded-xl overflow-hidden border-2 transition-all relative ${getSelectedValue() === option.value
                     ? 'border-amber-600 shadow-lg shadow-amber-500/20'
                     : 'border-slate-200 hover:border-amber-400'
-                }`}
+                  }`}
               >
                 <div className="aspect-square bg-slate-100">
-                  <img 
-                    src={option.image} 
+                  <img
+                    src={option.image}
                     alt={option.label}
                     className="w-full h-full object-cover"
                   />
@@ -345,9 +344,8 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
                   )}
                   {/* Add-on pricing for sole/detail */}
                   {(currentStep === 'sole' || currentStep === 'detail') && (
-                    <p className={`text-xs font-medium mt-1 ${
-                      option.price === 0 ? 'text-green-600' : 'text-amber-600'
-                    }`}>
+                    <p className={`text-xs font-medium mt-1 ${option.price === 0 ? 'text-green-600' : 'text-amber-600'
+                      }`}>
                       {option.price === 0 ? 'Included' : `+PKR ${option.price.toLocaleString()}`}
                     </p>
                   )}
@@ -361,7 +359,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
             ))}
           </div>
         )}
-        
+
         {/* Color Selection */}
         {currentStep === 'color' && (
           <div className="grid grid-cols-5 gap-3">
@@ -369,26 +367,24 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               <button
                 key={color.value}
                 onClick={() => handleSelect(color.value)}
-                className={`aspect-square rounded-xl border-2 transition-all ${
-                  menConfig.color === color.value
+                className={`aspect-square rounded-xl border-2 transition-all ${menConfig.color === color.value
                     ? 'border-amber-600 scale-110 shadow-lg'
                     : 'border-slate-200 hover:border-amber-400'
-                }`}
+                  }`}
                 style={{ backgroundColor: color.hex }}
                 title={color.label}
               >
                 {menConfig.color === color.value && (
-                  <Check className={`w-6 h-6 mx-auto ${
-                    ['black', 'dark-brown', 'chocolate-brown', 'navy-blue', 'burgundy'].includes(color.value)
+                  <Check className={`w-6 h-6 mx-auto ${['black', 'dark-brown', 'chocolate-brown', 'navy-blue', 'burgundy'].includes(color.value)
                       ? 'text-white'
                       : 'text-slate-800'
-                  }`} />
+                    }`} />
                 )}
               </button>
             ))}
           </div>
         )}
-        
+
         {/* Size Selection */}
         {currentStep === 'size' && (
           <div className="grid grid-cols-4 gap-3">
@@ -396,18 +392,17 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               <button
                 key={size}
                 onClick={() => handleSelect(size.toString())}
-                className={`aspect-square rounded-xl font-semibold text-lg transition-all ${
-                  menConfig.size === size
+                className={`aspect-square rounded-xl font-semibold text-lg transition-all ${menConfig.size === size
                     ? 'bg-gradient-to-br from-amber-600 to-amber-500 text-white shadow-lg'
                     : 'bg-white border-2 border-slate-200 text-slate-700 hover:border-amber-400'
-                }`}
+                  }`}
               >
                 {size}
               </button>
             ))}
           </div>
         )}
-        
+
         {/* Navigation Buttons */}
         <div className="flex gap-3 mt-6">
           {currentStepIndex > 0 && (
@@ -419,7 +414,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               Previous
             </Button>
           )}
-          
+
           {currentStepIndex < STEPS.length - 1 && (
             <Button
               onClick={goToNextStep}
@@ -430,7 +425,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
             </Button>
           )}
         </div>
-        
+
         {/* Generate Preview Button — always visible when config complete */}
         {designStore.isConfigComplete() && !isGenerating && (
           <Button
@@ -442,7 +437,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
           </Button>
         )}
       </div>
-      
+
       {/* Fixed Price Footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 z-40 safe-area-pb">
         <div className="flex items-center justify-between max-w-lg mx-auto">
@@ -452,7 +447,7 @@ export function MenConfigurator({ designStore, onReviewOrder, onBack }: MenConfi
               PKR {designStore.getCurrentPrice().toLocaleString()}
             </p>
           </div>
-          
+
           <Button
             onClick={onReviewOrder}
             disabled={!designStore.isConfigComplete()}
