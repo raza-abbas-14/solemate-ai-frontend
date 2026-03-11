@@ -46,11 +46,8 @@ export default async function handler(req, res) {
         const inputParams = {
             prompt: prompt,
             negative_prompt: negative_prompt || "ugly, deformed, disfigured, poor details, bad anatomy",
-            width: 768,
-            height: 768,
-            refine: "expert_ensemble_refiner",
-            num_outputs: 1,
-            apply_watermark: false
+            output_format: "png",
+            num_outputs: 1
         };
 
         // If an init image is provided for Img2Img mapping
@@ -61,7 +58,7 @@ export default async function handler(req, res) {
         }
 
         const output = await replicate.run(
-            "stability-ai/sdxl:39ed52f2a78e934b3ba6e2a89f5b1c712de7dfea535525255b1aa35c5565e08b",
+            "stability-ai/stable-diffusion-3.5-large",
             { input: inputParams }
         );
 
