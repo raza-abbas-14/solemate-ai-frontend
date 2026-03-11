@@ -65,7 +65,19 @@ export default async function handler(req, res) {
         );
 
         if (output && output.length > 0) {
-            return res.status(200).json({ imageUrl: output[0] });
+            const firstResult = output[0];
+            let parsedUrl = '';
+
+            // Replicate v1.x SDK returns FileOutput objects. We must explicitly extract the URL string.
+            if (typeof firstResult === 'object' && typeof firstResult.url === 'function') {
+                parsedUrl = firstResult.url().toString();
+            } else if (typeof firstResult === 'object' && firstResult.url) {
+                parsedUrl = firstResult.url;
+            } else {
+                parsedUrl = firstResult.toString();
+            }
+
+            return res.status(200).json({ imageUrl: parsedUrl });
         } else {
             return res.status(500).json({ error: 'No image generated from Replicate.' });
         }
