@@ -44,6 +44,11 @@ export async function createCheckoutSession(options: CheckoutOptions): Promise<s
         checkoutUrl.searchParams.append('beacon', data.data.token);
         checkoutUrl.searchParams.append('source', 'custom');
         checkoutUrl.searchParams.append('order_id', options.orderId);
+        
+        // Add redirect and cancel URLs so Safepay returns back to the website
+        const origin = window.location.origin;
+        checkoutUrl.searchParams.append('redirect_url', `${origin}/?payment=success&order=${options.orderId}`);
+        checkoutUrl.searchParams.append('cancel_url', `${origin}/?payment=cancel`);
 
         // Callbacks can be managed in your app via standard redirect handling
         return checkoutUrl.toString();

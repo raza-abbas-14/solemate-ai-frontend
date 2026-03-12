@@ -179,7 +179,7 @@ export function OrderReviewModal({ designStore, isOpen, onClose, onConfirmOrder 
     // 3. Save Order to Database
     const savedOrder = await saveOrder({
       order_number: orderNumber,
-      status: 'new-order',
+      status: isManual ? 'new-order' : 'pending-payment',
       gender: designStore.selectedGender || '',
       style: configData?.style || '',
       material: configData?.material || '',
@@ -208,13 +208,12 @@ export function OrderReviewModal({ designStore, isOpen, onClose, onConfirmOrder 
       const waMessage = `Hello SoleMate AI! I have placed order #${orderNumber}.\nI will be paying via ${activeTab === 'easypaisa' ? 'Easypaisa' : 'Jazzcash'}. Here will be my receipt:`;
       const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(waMessage)}`;
       window.open(waUrl, '_blank');
+      setIsProcessingSafepay(false);
+      setIsSuccess(true);
     } else if (checkoutUrl) {
-      // Open Safepay in a new secure tab so the user doesn't lose their website state
-      window.open(checkoutUrl, '_blank');
+      // Redirect to Safepay. The user will return via redirect_url or cancel_url
+      window.location.href = checkoutUrl;
     }
-
-    setIsProcessingSafepay(false);
-    setIsSuccess(true);
   };
 
   const configData = config.config as any;

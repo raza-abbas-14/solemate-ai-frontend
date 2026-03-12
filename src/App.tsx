@@ -46,7 +46,22 @@ function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  });
+  }, [isAdminLoggedIn]);
+
+  // Handle Safepay redirect callbacks
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentStatus = params.get('payment');
+    
+    if (paymentStatus === 'success') {
+      setShowOrderSuccess(true);
+      // Clean up URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+    } else if (paymentStatus === 'cancel') {
+      alert("Payment was cancelled or unsuccessful. Your order has been saved as pending.");
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   const handleAdminLogin = () => {
     if (adminPassword === ADMIN_PASSWORD) {
@@ -354,7 +369,6 @@ function App() {
       {showOrderSuccess && (
         <OrderSuccessModal
           onNewDesign={handleNewDesign}
-          onViewOrders={() => { setShowOrderSuccess(false); setCurrentView('admin'); }}
         />
       )}
     </div>

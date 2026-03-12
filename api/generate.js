@@ -39,27 +39,25 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: 'REPLICATE_API_TOKEN is missing on Vercel.' });
         }
 
+        if (!image) {
+            return res.status(400).json({ error: 'Base image is required for generation.' });
+        }
+
         const replicate = new Replicate({
             auth: process.env.REPLICATE_API_TOKEN,
         });
 
-        const inputParams = {
-            prompt: prompt,
-            negative_prompt: negative_prompt || "ugly, deformed, disfigured, poor details, bad anatomy",
-            output_format: "png",
-            num_outputs: 1
-        };
-
-        // If an init image is provided for Img2Img mapping
-        if (image) {
-            inputParams.image = image;
-            // 0.85 gives the AI heavy freedom to override the template's grey color with the user's chosen color
-            inputParams.prompt_strength = 0.85;
-        }
-
+        // Use SDXL ControlNet (Canny) to strictly preserve shoe geometry
         const output = await replicate.run(
-            "stability-ai/stable-diffusion-3.5-large",
-            { input: inputParams }
+            "lucataco/sdxl-controlnet:822c95ed1b24e6e06b3fa10dae95bd6b3a0c5c363dc8fbe84032d1f953ccf402",
+            {
+                input: {
+                    prompt: prompt,
+                    negative_prompt: negative_prompt || "ugly, deformed, disfigured, poor details, bad anatomy",
+                    image: image,
+                    condition_scale: 0.8 // Locks the physical shape of the shoe
+                }
+            }
         );
 
         if (output && output.length > 0) {
